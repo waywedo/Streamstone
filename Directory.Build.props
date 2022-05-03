@@ -12,7 +12,7 @@
 
     <!-- Set common properties regarding assembly information and nuget packages -->
     <PropertyGroup>
-        <Authors>Yevhen Bobrov</Authors>
+        <Authors>Nathan Keir, Yevhen Bobrov</Authors>
         <Product>Streamstone</Product>
         <Copyright>since 2016 © Yevhen Bobrov. All rights reserved.</Copyright>
         <PackageLicenseFile>LICENSE</PackageLicenseFile>
@@ -20,7 +20,7 @@
         <PackageIcon>Logo.png</PackageIcon>
         <PackageTags>event store eventstore eventsourcing event-sourcing CQRS azure table storage stream</PackageTags>
         <PackageReleaseNotes></PackageReleaseNotes>
-        <RepositoryUrl>https://github.com/yevhen/Streamstone</RepositoryUrl>
+        <RepositoryUrl>https://github.com/waywedo/waywedo.Streamstone</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <IncludeSymbols>true</IncludeSymbols>
         <IncludeSource>true</IncludeSource>
@@ -45,6 +45,7 @@
     <PropertyGroup>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <LangVersion>10</LangVersion>
+	    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -69,23 +70,6 @@
         <!-- Tooling related packages -->
         <SourceLinkVersion>2.7.6</SourceLinkVersion>
 
-    </PropertyGroup>
-
-    <!-- Versioning properties -->
-    <PropertyGroup>
-        <VersionPrefix Condition=" '$(VersionPrefix)'=='' ">2.0.0</VersionPrefix>
-        <VersionSuffix Condition=" '$(VersionSuffix)'=='' ">dev</VersionSuffix>
-    </PropertyGroup>
-
-    <!-- For Debug builds generated a date/time dependent version suffix -->
-    <PropertyGroup Condition=" '$(Configuration)'=='Debug' ">
-        <VersionSuffix Condition=" '$(VersionSuffix)'=='' ">dev</VersionSuffix>
-        <VersionSuffix Condition=" '$(VersionDateSuffix)'!='' ">$(VersionSuffix)-$(VersionDateSuffix)</VersionSuffix>
-    </PropertyGroup>
-
-    <!-- Set output folder for created NuGet packages -->
-    <PropertyGroup>
-        <PackageOutputPath Condition=" '$(PackageOutputPath)'=='' ">$(SourceRoot)Artifacts\$(Configuration)</PackageOutputPath>
     </PropertyGroup>
 
     <Choose>

@@ -1,31 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+	<PropertyGroup>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <TargetFramework>$(LibProjectTargetFramework)</TargetFramework>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)'=='Debug'">
+		<TargetFramework>$(LibProjectTargetFramework)</TargetFramework>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)'=='Release'">
-    <DocumentationFile>$(OutDir)\Streamstone.xml</DocumentationFile>
-    <TargetFrameworks>$(LibProjectTargetFramework);net47</TargetFrameworks>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)'=='Release'">
+		<DocumentationFile>$(OutDir)\Streamstone.xml</DocumentationFile>
+		<TargetFramework>$(LibProjectTargetFramework)</TargetFramework>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <PackageId>Streamstone</PackageId>
-    <Title>Streamstone core library</Title>
-    <Description>Streamstone is a lightweight library which implements a low-level mechanics of Event Store on top of Windows Azure Table Storage. Handles concurrency conflicts via optimistic locking. Supports custom event and stream metadata. Optimized for batch processing.</Description>
-  </PropertyGroup>
+	<PropertyGroup>
+		<PackageId>waywedo.Streamstone</PackageId>
+		<Title>Streamstone core library</Title>
+		<Version>1.0.0</Version>
+		<Description>Way We Do specific version of Streamstone. Primarily modified to update Azure Table Storage API's and updgrade Stream.Version from int to long.</Description>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <IsPackable>true</IsPackable>
-    <SourceLinkCreate>true</SourceLinkCreate>
-  </PropertyGroup>
+	<PropertyGroup>
+		<IsPackable>true</IsPackable>
+		<SourceLinkCreate>true</SourceLinkCreate>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="$(MicrosoftAzureCosmosTableVersion)" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="$(MicrosoftAzureCosmosTableVersion)" />
+	</ItemGroup>
 
 </Project>
