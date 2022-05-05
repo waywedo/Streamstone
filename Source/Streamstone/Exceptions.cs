@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Text;
+using Streamstone.Annotations;
+using Azure;
+using Azure.Data.Tables;
 
-using Microsoft.Azure.Cosmos.Table;
-
+#pragma warning disable RCS1194 // Implement exception constructors.
 namespace Streamstone
 {
-    using Annotations;
-
     /// <summary>
     /// Represents errors thrown by Streamstone itself.
     /// </summary>
@@ -20,11 +20,11 @@ namespace Streamstone
         [StringFormatMethod("message")]
         protected StreamstoneException(string message, params object[] args)
             : base(args.Length > 0 ? string.Format(message, args) : message)
-        {}
+        { }
     }
 
     /// <summary>
-    /// This exception is thrown when opening stream that doesn't exist 
+    /// This exception is thrown when opening stream that doesn't exist
     /// </summary>
     public sealed class StreamNotFoundException : StreamstoneException
     {
@@ -35,7 +35,7 @@ namespace Streamstone
 
         internal StreamNotFoundException(Partition partition)
             : base("Stream header was not found in partition '{1}' which resides in '{0}' table located at {2}",
-                   partition.Table, partition, partition.Table.StorageUri)
+                   partition.Table, partition, partition.Table.AccountName)
         {
             Partition = partition;
         }
@@ -58,7 +58,7 @@ namespace Streamstone
 
         internal DuplicateEventException(Partition partition, string id)
             : base("Found existing event with id '{3}' in partition '{1}' which resides in '{0}' table located at {2}",
-                   partition.Table, partition, partition.Table.StorageUri, id)
+                   partition.Table, partition, partition.Table.AccountName, id)
         {
             Partition = partition;
             Id = id;
@@ -94,7 +94,7 @@ namespace Streamstone
             var message = string.Format(
                 "Included '{3}' operation had conflicts in partition '{1}' which resides in '{0}' table located at {2}\n" +
                 "Dump of conflicting [{5}] contents follows: \n\t{4}",
-                partition.Table, partition, partition.Table.StorageUri, 
+                partition.Table, partition, partition.Table.AccountName,
                 include.GetType().Name, dump, include.Entity.GetType());
 
             return new IncludedOperationConflictException(partition, include.Entity, message);
@@ -123,14 +123,14 @@ namespace Streamstone
 
         internal ConcurrencyConflictException(Partition partition, string details)
             : base("Concurrent write detected for partition '{1}' which resides in table '{0}' located at {2}. See details below.\n{3}",
-                   partition.Table, partition, partition.Table.StorageUri, details)
+                   partition.Table, partition, partition.Table.AccountName, details)
         {
             Partition = partition;
         }
 
         internal static Exception EventVersionExists(Partition partition, int version)
         {
-            return new ConcurrencyConflictException(partition, string.Format("Event with version '{0}' is already exists", version));            
+            return new ConcurrencyConflictException(partition, string.Format("Event with version '{0}' is already exists", version));
         }
 
         internal static Exception StreamChanged(Partition partition)
@@ -152,32 +152,33 @@ namespace Streamstone
         /// <summary>
         /// The error information
         /// </summary>
-        public readonly StorageExtendedErrorInformation Error;
+        public readonly RequestFailedException Error;
 
-        UnexpectedStorageResponseException(StorageExtendedErrorInformation error, string details)
+        UnexpectedStorageResponseException(RequestFailedException error, string details)
             : base("Unexpected Table Storage response. Details: " + details)
         {
             Error = error;
         }
 
-        internal static Exception ErrorCodeShouldBeEntityAlreadyExists(StorageExtendedErrorInformation error)
+        internal static Exception ErrorCodeShouldBeEntityAlreadyExists(RequestFailedException error)
         {
             return new UnexpectedStorageResponseException(error, "Erorr code should be indicated as 'EntityAlreadyExists' but was: " + error.ErrorCode);
         }
 
-        internal static Exception ConflictExceptionMessageShouldHaveExactlyThreeLines(StorageExtendedErrorInformation error)
+        internal static Exception ConflictExceptionMessageShouldHaveExactlyThreeLines(RequestFailedException error)
         {
             return new UnexpectedStorageResponseException(error, "Conflict exception message should have exactly 3 lines");
         }
 
-        internal static Exception ConflictExceptionMessageShouldHaveSemicolonOnFirstLine(StorageExtendedErrorInformation error)
+        internal static Exception ConflictExceptionMessageShouldHaveSemicolonOnFirstLine(RequestFailedException error)
         {
             return new UnexpectedStorageResponseException(error, "Conflict exception message should have semicolon on first line");
         }
 
-        internal static Exception UnableToParseTextBeforeSemicolonToInteger(StorageExtendedErrorInformation error)
+        internal static Exception UnableToParseTextBeforeSemicolonToInteger(RequestFailedException error)
         {
             return new UnexpectedStorageResponseException(error, "Unable to parse text on first line before semicolon as integer");
         }
     }
 }
+#pragma warning restore RCS1194 // Implement exception constructors.

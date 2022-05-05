@@ -2,11 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
-using Microsoft.Azure.Cosmos.Table;
-
 using Streamstone;
-using Streamstone.Utility;
 
 
 namespace Example.Scenarios
@@ -22,8 +18,8 @@ namespace Example.Scenarios
 
         /// <summary>
         /// This the simplest approach. You just need to create an additional stream metadata column and then you can simply query on it.
-        /// 
-        /// It's also the slowest approach of all, since all rows in a partition need to scanned. Still, it should 
+        ///
+        /// It's also the slowest approach of all, since all rows in a partition need to scanned. Still, it should
         /// perform quite well for majority of apps as there won't be too many rows in a single physical partition.
         /// </summary>
         async Task MultipleStreamsPerPartitionUsingStreamProperties()
@@ -50,11 +46,11 @@ namespace Example.Scenarios
         }
 
         /// <summary>
-        /// This approach is a bit more complex, since you will need to track the start of lifecycle of the stream and include projection of its header. 
+        /// This approach is a bit more complex, since you will need to track the start of lifecycle of the stream and include projection of its header.
         /// The projection row will be simply a reverse rowkey of stream header entity, so that you can query a range of rows using prefix query.
-        /// 
-        /// This is the most performant way to query all streams(headers) in a single physical partition.  There is no any other approach which is more 
-        /// performant than this one.  The only downside, it could only be used along with Stream.WriteAsync since at the moment Streamstone doesn't support 
+        ///
+        /// This is the most performant way to query all streams(headers) in a single physical partition.  There is no any other approach which is more
+        /// performant than this one.  The only downside, it could only be used along with Stream.WriteAsync since at the moment Streamstone doesn't support
         /// inclusion of additional entities when provisioning streams.
         /// </summary>
         async Task MultipleStreamsPerPartitionUsingProjection()
@@ -79,13 +75,13 @@ namespace Example.Scenarios
         }
 
         /// <summary>
-        /// For this way you may simply create a facade through which all stream operations will go. Behind the curtain, you will record (track) all 
-        /// created streams in some dedicated partition, so that you can simply query single partition to get information about all streams in your 
+        /// For this way you may simply create a facade through which all stream operations will go. Behind the curtain, you will record (track) all
+        /// created streams in some dedicated partition, so that you can simply query single partition to get information about all streams in your
         /// system. Basically, it's a just an implementation of multi-tenancy.
         ///
-        /// This last approach is little bit more involved but with stream-per-partition it is the only possible approach.  There will be some additional 
-        /// complexity related to maintaining consistency between directory partition and actual stream partition, since there is no cross-partition 
-        /// transactions in WATS.  But that should be a really rare case (failure to write stream after recording it in directory) and can be resolved 
+        /// This last approach is little bit more involved but with stream-per-partition it is the only possible approach.  There will be some additional
+        /// complexity related to maintaining consistency between directory partition and actual stream partition, since there is no cross-partition
+        /// transactions in WATS.  But that should be a really rare case (failure to write stream after recording it in directory) and can be resolved
         /// with manual intervention.
         /// </summary>
         async Task SingleStreamPerPartitionUsingIndirectionLayer()

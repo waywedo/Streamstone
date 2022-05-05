@@ -1,5 +1,6 @@
 ﻿using Azure.Data.Tables;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Streamstone
 {
@@ -17,24 +18,13 @@ namespace Streamstone
             /// <param name="partition">The partition.</param>
             /// <param name="prefix">The row key prefix.</param>
             /// <returns>An instance of <see cref="IEnumerable{T}"/> that allow to scroll over all rows</returns>
-            public static IEnumerable<TEntity> RowKeyPrefixQuery<TEntity>(this Partition partition, string prefix) where TEntity : ITableEntity, new()
+            public static async Task<IEnumerable<TEntity>> RowKeyPrefixQueryAsync<TEntity>(this Partition partition, string prefix)
+                where TEntity : class, ITableEntity, new()
             {
-                var filter =
-                      TableQuery.CombineFilters(
-                          TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, partition.PartitionKey),
-                          TableOperators.And,
-                          WhereRowKeyPrefixFilter(prefix));
+                var filter = $"{nameof(TableEntity.PartitionKey)} eq '{partition.PartitionKey}'" +
+                    $" and {WhereRowKeyPrefixFilter(prefix)}";
 
-                var query = new TableQuery<TEntity>().Where(filter);
-                TableContinuationToken token = null;
-                do
-                {
-                    var segment = partition.Table.ExecuteQuerySegmentedAsync(query, null).Result;
-                    token = segment.ContinuationToken;
-                    foreach (var res in segment.Results)
-                        yield return res;
-                }
-                while (token != null);
+                return await ExecuteQueryAsync<TEntity>(partition.Table, filter);
             }
 
             /// <summary>
@@ -44,30 +34,26 @@ namespace Streamstone
             /// <param name="table">The table.</param>
             /// <param name="filter">The row key prefix filter.</param>
             /// <returns>An instance of <see cref="IEnumerable{T}"/> that alllow further criterias to be added</returns>
-            public static IEnumerable<TEntity> ExecuteQuery<TEntity>(this TableClient table, string filter) where TEntity : ITableEntity, new()
+            public static async Task<IEnumerable<TEntity>> ExecuteQueryAsync<TEntity>(this TableClient table, string filter)
+                where TEntity : class, ITableEntity, new()
             {
-                var query = new TableQuery<TEntity>().Where(filter);
-                TableContinuationToken token;
-                do
+                var query = table.QueryAsync<TEntity>(filter);
+
+                var result = new List<TEntity>();
+                await foreach (var entity in query)
                 {
-                    var segment = table.ExecuteQuerySegmentedAsync(query, null).Result;
-                    token = segment.ContinuationToken;
-                    foreach (var res in segment.Results)
-                        yield return res;
+                    result.Add(entity);
                 }
-                while (token != null);
+
+                return result;
             }
 
             static string WhereRowKeyPrefixFilter(string prefix)
             {
                 var range = new PrefixRange(prefix);
-                var filter =
-                     TableQuery.CombineFilters(
-                         TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.GreaterThanOrEqual, range.Start),
-                         TableOperators.And,
-                         TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.LessThan, range.End));
 
-                return filter;
+                return $"{nameof(TableEntity.RowKey)} ge '{range.Start}'" +
+                    $" and {nameof(TableEntity.RowKey)} lt '{range.End}'";
             }
         }
 

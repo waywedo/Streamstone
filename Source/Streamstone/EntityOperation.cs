@@ -15,11 +15,11 @@ namespace Streamstone
             Entity = entity;
         }
 
-        protected abstract TableOperation AsTableOperation();
+        protected abstract TableTransactionAction AsTableTransactionAction();
 
-        public static implicit operator TableOperation(EntityOperation arg)
+        public static implicit operator TableTransactionAction(EntityOperation arg)
         {
-            return arg.AsTableOperation();
+            return arg.AsTableTransactionAction();
         }
 
         public abstract EntityOperation Merge(EntityOperation other);
@@ -44,9 +44,9 @@ namespace Streamstone
                 : base(entity)
             {}
 
-            protected override TableOperation AsTableOperation()
+            protected override TableTransactionAction AsTableTransactionAction()
             {
-                return TableOperation.Insert(Entity);
+                return new TableTransactionAction(TableTransactionActionType.Add, Entity);
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -76,9 +76,9 @@ namespace Streamstone
                 : base(entity)
             {}
 
-            protected override TableOperation AsTableOperation()
+            protected override TableTransactionAction AsTableTransactionAction()
             {
-                return TableOperation.Replace(Entity);
+                return new TableTransactionAction(TableTransactionActionType.UpdateReplace, Entity);
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -108,9 +108,9 @@ namespace Streamstone
                 : base(entity)
             {}
 
-            protected override TableOperation AsTableOperation()
+            protected override TableTransactionAction AsTableTransactionAction()
             {
-                return TableOperation.Delete(Entity);
+                return new TableTransactionAction(TableTransactionActionType.Delete, Entity);
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -140,9 +140,9 @@ namespace Streamstone
                 : base(entity)
             {}
 
-            protected override TableOperation AsTableOperation()
+            protected override TableTransactionAction AsTableTransactionAction()
             {
-                return TableOperation.InsertOrMerge(Entity);
+                return new TableTransactionAction(TableTransactionActionType.UpsertMerge, Entity);
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -172,9 +172,9 @@ namespace Streamstone
                 : base(entity)
             {}
 
-            protected override TableOperation AsTableOperation()
+            protected override TableTransactionAction AsTableTransactionAction()
             {
-                return TableOperation.InsertOrReplace(Entity);
+                return new TableTransactionAction(TableTransactionActionType.UpsertReplace, Entity);
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -204,8 +204,10 @@ namespace Streamstone
                 : base(entity)
             {}
 
-            protected override TableOperation AsTableOperation() =>
-                TableOperation.Merge(Entity);
+            protected override TableTransactionAction AsTableTransactionAction()
+            {
+                return new TableTransactionAction(TableTransactionActionType.UpdateMerge, Entity);
+            }
 
             public override EntityOperation Merge(EntityOperation other) =>
                 throw new InvalidOperationException("Internal-only stream header merge operation");
@@ -217,7 +219,7 @@ namespace Streamstone
                 : base(null)
             {}
 
-            protected override TableOperation AsTableOperation()
+            protected override TableTransactionAction AsTableTransactionAction()
             {
                 throw new NotImplementedException();
             }

@@ -44,7 +44,7 @@ namespace Streamstone
             return result;
         }
 
-        public static StreamEntity From(DynamicTableEntity entity)
+        public static StreamEntity From(TableEntity entity)
         {
             return new StreamEntity
             {
@@ -52,7 +52,7 @@ namespace Streamstone
                 RowKey = entity.RowKey,
                 ETag = entity.ETag,
                 Timestamp = entity.Timestamp,
-                Version = (int)entity.Properties["Version"].PropertyAsObject,
+                Version = (int)entity.GetInt32("Version"),
                 Properties = StreamProperties.From(entity)
             };
         }
