@@ -1,22 +1,20 @@
-﻿using System;
-using System.Linq;
-
-using Microsoft.Azure.Cosmos.Table;
+﻿using Azure.Data.Tables;
+using System;
 
 namespace Streamstone
 {
     /// <summary>
-    /// Represents table partition. Virtual partitions are created 
+    /// Represents table partition. Virtual partitions are created
     /// by using <c>`|`</c> split separator in a key.
     /// </summary>
     public sealed class Partition
     {
-        static readonly string[] separator = {"|"};
+        static readonly string[] separator = { "|" };
 
         /// <summary>
-        /// The table in which this partition resides
+        /// A client for the table in which this partition resides
         /// </summary>
-        public readonly CloudTable Table;
+        public readonly TableClient Table;
 
         /// <summary>
         /// The partition key
@@ -36,22 +34,22 @@ namespace Streamstone
         /// <summary>
         /// Initializes a new instance of the <see cref="Partition"/> class.
         /// </summary>
-        /// <param name="table">The cloud table.</param>
+        /// <param name="table">The table client.</param>
         /// <param name="key">The full key.</param>
         /// <remarks>Use "partitionkey|rowkeyprefix" key syntax to create virtual partition</remarks>
-        public Partition(CloudTable table, string key)
+        public Partition(TableClient table, string key)
         {
             Requires.NotNull(table, nameof(table));
             Requires.NotNullOrEmpty(key, nameof(key));
 
-            var parts = key.Split(separator, 2, 
+            var parts = key.Split(separator, 2,
                 StringSplitOptions.RemoveEmptyEntries);
 
             Table = table;
-            
+
             PartitionKey = parts[0];
-            RowKeyPrefix = parts.Length > 1 
-                            ? parts[1] + separator[0] 
+            RowKeyPrefix = parts.Length > 1
+                            ? parts[1] + separator[0]
                             : "";
             Key = key;
         }
@@ -62,7 +60,7 @@ namespace Streamstone
         /// <param name="table">The cloud table.</param>
         /// <param name="partitionKey">The partition's own key.</param>
         /// <param name="rowKeyPrefix">The row's key prefix.</param>
-        public Partition(CloudTable table, string partitionKey, string rowKeyPrefix)
+        public Partition(TableClient table, string partitionKey, string rowKeyPrefix)
         {
             Requires.NotNull(table, nameof(table));
             Requires.NotNullOrEmpty(partitionKey, nameof(partitionKey));

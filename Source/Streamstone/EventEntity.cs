@@ -1,12 +1,11 @@
-﻿using System;
+﻿using Azure;
+using Azure.Data.Tables;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-
-using Microsoft.Azure.Cosmos.Table;
 
 namespace Streamstone
 {
-    class EventEntity : TableEntity
+    class EventEntity : ITableEntity
     {
         public const string RowKeyPrefix = "SS-SE-";
 
@@ -20,11 +19,15 @@ namespace Streamstone
             PartitionKey = partition.PartitionKey;
             RowKey = partition.EventVersionRowKey(@event.Version);
             Properties = @event.Properties;
-            Version = @event.Version;   
+            Version = @event.Version;
         }
 
-        public int Version                  { get; set; }
-        public EventProperties Properties   { get; set; }
+        public int Version { get; set; }
+        public EventProperties Properties { get; set; }
+        public string PartitionKey { get; set; }
+        public string RowKey { get; set; }
+        public DateTimeOffset? Timestamp { get; set; }
+        public ETag ETag { get; set; }
 
         public override void ReadEntity(IDictionary<string, EntityProperty> properties, OperationContext operationContext)
         {

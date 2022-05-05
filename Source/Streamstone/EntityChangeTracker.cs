@@ -6,7 +6,7 @@ namespace Streamstone
 {
     class EntityChangeTracker
     {
-        readonly Dictionary<string, EntityChangeRecord> records = 
+        readonly Dictionary<string, EntityChangeRecord> records =
              new Dictionary<string, EntityChangeRecord>();
 
         public IEnumerable<EntityOperation> Compute()
@@ -26,7 +26,7 @@ namespace Streamstone
         {
             var entityKey = operation.Entity.RowKey;
 
-            EntityChangeRecord record; 
+            EntityChangeRecord record;
             if (!records.TryGetValue(entityKey, out record))
             {
                 record = new EntityChangeRecord(operation);
@@ -51,11 +51,11 @@ namespace Streamstone
                 if (current == EntityOperation.None)
                     return null;
 
-                var transient = string.IsNullOrEmpty(current.Entity.ETag);
+                var transient = current.Entity.ETag.Equals(null);
 
                 if (transient && current is EntityOperation.Replace)
                     throw new InvalidOperationException(
-                        string.Format("'Replace' operation of entity '{0}' with RowKey '{1}' is missing Etag", 
+                        string.Format("'Replace' operation of entity '{0}' with RowKey '{1}' is missing Etag",
                                       current.Entity.GetType(), current.Entity.RowKey));
 
                 if (transient && current is EntityOperation.Delete)
@@ -66,7 +66,7 @@ namespace Streamstone
 
             public void Merge(EntityOperation next)
             {
-                if (current != EntityOperation.None 
+                if (current != EntityOperation.None
                     && next.Entity != current.Entity)
                     throw new InvalidOperationException(
                         "Mistaken identity. Different instance of entity " +

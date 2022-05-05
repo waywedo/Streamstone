@@ -1,12 +1,11 @@
-﻿using System;
+﻿using Azure;
+using Azure.Data.Tables;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-
-using Microsoft.Azure.Cosmos.Table;
 
 namespace Streamstone
 {
-    class StreamEntity : TableEntity
+    class StreamEntity : ITableEntity
     {
         public const string FixedRowKey = "SS-HEAD";
 
@@ -15,7 +14,7 @@ namespace Streamstone
             Properties = StreamProperties.None;
         }
 
-        public StreamEntity(Partition partition, string etag, int version, StreamProperties properties)
+        public StreamEntity(Partition partition, ETag etag, int version, StreamProperties properties)
         {
             Partition = partition;
             PartitionKey = partition.PartitionKey;
@@ -25,8 +24,12 @@ namespace Streamstone
             Properties = properties;
         }
 
-        public int Version                  { get; set; }
-        public StreamProperties Properties  { get; set; }
+        public int Version { get; set; }
+        public StreamProperties Properties { get; set; }
+        public string PartitionKey { get; set; }
+        public string RowKey { get; set; }
+        public DateTimeOffset? Timestamp { get; set; }
+        public ETag ETag { get; set; }
 
         public override void ReadEntity(IDictionary<string, EntityProperty> properties, OperationContext operationContext)
         {
@@ -56,8 +59,8 @@ namespace Streamstone
 
         public EntityOperation Operation()
         {
-            var isTransient = ETag == null;
-            
+            var isTransient = ETag.Equals(null);
+
             return isTransient ? Insert() : ReplaceOrMerge();
 
             EntityOperation.Insert Insert() => new EntityOperation.Insert(this);

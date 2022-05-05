@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
-
-using Microsoft.Azure.Cosmos.Table;
+using Azure.Data.Tables;
 using Streamstone;
 
 namespace Example
@@ -8,10 +7,10 @@ namespace Example
     public abstract class Scenario
     {
         protected string Id;
-        protected CloudTable Table;
+        protected TableClient Table;
         protected Partition Partition;
 
-        public void Initialize(CloudTable table, string id)
+        public void Initialize(TableClient table, string id)
         {
             Id = id;
             Table = table;

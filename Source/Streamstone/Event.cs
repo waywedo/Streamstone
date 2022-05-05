@@ -30,7 +30,7 @@ namespace Streamstone
         /// </summary>
         public EventData()
             : this(EventId.None, EventProperties.None, EventIncludes.None)
-        {}
+        { }
 
         /// <summary>
         /// Constructs a new <see cref="EventData"/> instance which doesn't have any additional properties.
@@ -40,10 +40,10 @@ namespace Streamstone
         /// </param>
         public EventData(EventId id)
             : this(id, EventProperties.None, EventIncludes.None)
-        {}
+        { }
 
         /// <summary>
-        /// Constructs a new <see cref="EventData"/> instance which doesn't have any additional properties 
+        /// Constructs a new <see cref="EventData"/> instance which doesn't have any additional properties
         /// but includes a set of additional entity includes.
         /// </summary>
         /// <param name="id">
@@ -54,7 +54,7 @@ namespace Streamstone
         ///  </param>
         public EventData(EventId id, EventIncludes includes)
             : this(id, EventProperties.None, includes)
-        {}
+        { }
 
         /// <summary>
         /// Constructs a new <see cref="EventData"/> instance using given event properties.
@@ -67,7 +67,7 @@ namespace Streamstone
         /// </param>
         public EventData(EventId id, EventProperties properties)
             : this(id, properties, EventIncludes.None)
-        {}
+        { }
 
         /// <summary>
         /// Constructs a new <see cref="EventData"/> instance using given event properties
@@ -86,13 +86,13 @@ namespace Streamstone
         {
             Requires.NotNull(properties, nameof(properties));
             Requires.NotNull(includes, nameof(includes));
-            
+
             Id = id;
             Includes = includes;
             Properties = properties;
         }
 
-        internal RecordedEvent Record(Partition partition, int version) => 
+        internal RecordedEvent Record(Partition partition, int version) =>
             new RecordedEvent(Id, Properties, Includes, partition, version);
     }
 
@@ -113,7 +113,7 @@ namespace Streamstone
         public EventProperties Properties { get; }
 
         /// <summary>
-        /// A sequence number assigned by a stream to this event. 
+        /// A sequence number assigned by a stream to this event.
         /// </summary>
         public int Version { get; }
 
@@ -149,7 +149,7 @@ namespace Streamstone
             return new EntityOperation.Insert(entity);
         }
 
-        static IEnumerable<EntityOperation> Prepare(IEnumerable<Include> includes, Partition partition) => 
+        static IEnumerable<EntityOperation> Prepare(IEnumerable<Include> includes, Partition partition) =>
             includes.Select(include => include.Operation.Apply(partition));
 
         internal int Operations => EventOperations.Length + IncludedOperations.Length;

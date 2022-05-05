@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
-
-using Microsoft.Azure.Cosmos.Table;
+using Azure.Data.Tables;
 
 namespace Streamstone
 {
@@ -205,10 +204,10 @@ namespace Streamstone
                 : base(entity)
             {}
 
-            protected override TableOperation AsTableOperation() => 
+            protected override TableOperation AsTableOperation() =>
                 TableOperation.Merge(Entity);
 
-            public override EntityOperation Merge(EntityOperation other) => 
+            public override EntityOperation Merge(EntityOperation other) =>
                 throw new InvalidOperationException("Internal-only stream header merge operation");
         }
 

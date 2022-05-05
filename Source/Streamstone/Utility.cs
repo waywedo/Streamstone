@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
-
-using Microsoft.Azure.Cosmos.Table;
+﻿using Azure.Data.Tables;
+using System.Collections.Generic;
 
 namespace Streamstone
 {
@@ -20,7 +19,7 @@ namespace Streamstone
             /// <returns>An instance of <see cref="IEnumerable{T}"/> that allow to scroll over all rows</returns>
             public static IEnumerable<TEntity> RowKeyPrefixQuery<TEntity>(this Partition partition, string prefix) where TEntity : ITableEntity, new()
             {
-                var filter = 
+                var filter =
                       TableQuery.CombineFilters(
                           TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, partition.PartitionKey),
                           TableOperators.And,
@@ -35,7 +34,7 @@ namespace Streamstone
                     foreach (var res in segment.Results)
                         yield return res;
                 }
-                while (token != null);               
+                while (token != null);
             }
 
             /// <summary>
@@ -45,7 +44,7 @@ namespace Streamstone
             /// <param name="table">The table.</param>
             /// <param name="filter">The row key prefix filter.</param>
             /// <returns>An instance of <see cref="IEnumerable{T}"/> that alllow further criterias to be added</returns>
-            public static IEnumerable<TEntity> ExecuteQuery<TEntity>(this CloudTable table, string filter) where TEntity : ITableEntity, new()
+            public static IEnumerable<TEntity> ExecuteQuery<TEntity>(this TableClient table, string filter) where TEntity : ITableEntity, new()
             {
                 var query = new TableQuery<TEntity>().Where(filter);
                 TableContinuationToken token;

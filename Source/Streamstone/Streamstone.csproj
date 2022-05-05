@@ -27,7 +27,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Azure.Cosmos.Table" Version="$(MicrosoftAzureCosmosTableVersion)" />
+	  <PackageReference Include="Azure.Data.Tables" Version="12.5.0" />
 	</ItemGroup>
 
 </Project>

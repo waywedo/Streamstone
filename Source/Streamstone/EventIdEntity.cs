@@ -1,11 +1,10 @@
 using System;
-using System.Linq;
-
-using Microsoft.Azure.Cosmos.Table;
+using Azure;
+using Azure.Data.Tables;
 
 namespace Streamstone
 {
-    class EventIdEntity : TableEntity
+    class EventIdEntity : ITableEntity
     {
         public const string RowKeyPrefix = "SS-UID-";
 
@@ -20,10 +19,11 @@ namespace Streamstone
             Version = @event.Version;
         }
 
-        public int Version
-        {
-            get; set;
-        }
+        public int Version { get; set; }
+        public string PartitionKey { get; set; }
+        public string RowKey { get; set; }
+        public DateTimeOffset? Timestamp { get; set; }
+        public ETag ETag { get; set; }
 
         [IgnoreProperty]
         public RecordedEvent Event

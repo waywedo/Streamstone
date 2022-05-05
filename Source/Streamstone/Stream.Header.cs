@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Azure;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -38,10 +39,9 @@ namespace Streamstone
         /// <exception cref="ArgumentException">
         ///     If <paramref name="version"/> is less than <c>0</c>
         /// </exception>
-        public static Stream From(Partition partition, string etag, int version, StreamProperties properties = null)
+        public static Stream From(Partition partition, ETag etag, int version, StreamProperties properties = null)
         {
             Requires.NotNull(partition, nameof(partition));
-            Requires.NotNullOrEmpty(etag, nameof(etag));
             Requires.GreaterThanOrEqualToZero(version, nameof(version));
 
             return new Stream(partition, etag, version, properties ?? StreamProperties.None);
@@ -56,12 +56,12 @@ namespace Streamstone
         /// The partition in which this stream resides.
         /// </summary>
         public readonly Partition Partition;
-        
+
         /// <summary>
         /// The latest etag
         /// </summary>
-        public readonly string ETag;
-        
+        public readonly ETag ETag;
+
         /// <summary>
         /// The version of the stream. Sequential, monotonically increasing, no gaps.
         /// </summary>
@@ -71,20 +71,20 @@ namespace Streamstone
         /// Constructs a new <see cref="Stream"/> instance which doesn't have any additional properties.
         /// </summary>
         /// <param name="partition">
-        /// The partition in which this stream will reside. 
+        /// The partition in which this stream will reside.
         /// </param>
         /// <exception cref="ArgumentNullException">
         ///     If <paramref name="partition"/> is <c>null</c>
         /// </exception>
-        public Stream(Partition partition) 
+        public Stream(Partition partition)
             : this(partition, StreamProperties.None)
-        {}
+        { }
 
         /// <summary>
         /// Constructs a new <see cref="Stream"/> instance with the given additional properties.
         /// </summary>
         /// <param name="partition">
-        /// The partition in which this stream will reside. 
+        /// The partition in which this stream will reside.
         /// </param>
         /// <param name="properties">
         /// The additional properties for this stream.
@@ -104,7 +104,7 @@ namespace Streamstone
             Properties = properties;
         }
 
-        internal Stream(Partition partition, string etag, int version, StreamProperties properties)
+        internal Stream(Partition partition, ETag etag, int version, StreamProperties properties)
         {
             Partition = partition;
             ETag = etag;
@@ -118,7 +118,7 @@ namespace Streamstone
         /// <value>
         /// <c>true</c> if this stream header was newed; otherwise, <c>false</c>.
         /// </value>
-        public bool IsTransient => ETag == null;
+        public bool IsTransient => ETag.Equals(null);
 
         /// <summary>
         /// Gets a value indicating whether this stream header represents a persistent stream.
@@ -128,13 +128,13 @@ namespace Streamstone
         /// </value>
         public bool IsPersistent => !IsTransient;
 
-        static Stream From(Partition partition, StreamEntity entity) => 
+        static Stream From(Partition partition, StreamEntity entity) =>
             new Stream(partition, entity.ETag, entity.Version, entity.Properties);
 
-        StreamEntity Entity() => 
+        StreamEntity Entity() =>
             new StreamEntity(Partition, ETag, Version, Properties);
 
-        IEnumerable<RecordedEvent> Record(IEnumerable<EventData> events) => 
+        IEnumerable<RecordedEvent> Record(IEnumerable<EventData> events) =>
             events.Select((e, i) => e.Record(Partition, Version + i + 1));
     }
 }
