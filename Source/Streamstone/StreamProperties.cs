@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Azure.Data.Tables;
 
 namespace Streamstone
 {
@@ -17,7 +18,7 @@ namespace Streamstone
         StreamProperties()
         {}
 
-        StreamProperties(IDictionary<string, EntityProperty> properties) 
+        StreamProperties(IDictionary<string, EntityProperty> properties)
             : base(properties)
         {}
 

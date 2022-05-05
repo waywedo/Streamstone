@@ -2,6 +2,7 @@
 using Azure.Data.Tables;
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace Streamstone
 {
@@ -70,7 +71,7 @@ namespace Streamstone
                 : (EntityOperation)new EntityOperation.Replace(this);
         }
 
-        [IgnoreProperty]
+        [IgnoreDataMember]
         public Partition Partition
         {
             get; set;

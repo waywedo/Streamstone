@@ -2,10 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-
 using System.Reflection;
-
-using Microsoft.Azure.Cosmos.Table;
+using Azure.Data.Tables;
 
 namespace Streamstone
 {
@@ -14,20 +12,20 @@ namespace Streamstone
     /// </summary>
     public abstract class PropertyMap : IEnumerable<KeyValuePair<string, EntityProperty>>
     {
-        readonly IDictionary<string, EntityProperty> properties = 
+        readonly IDictionary<string, EntityProperty> properties =
               new Dictionary<string, EntityProperty>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PropertyMap"/> class.
         /// </summary>
         protected PropertyMap()
-        {}
+        { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PropertyMap"/> class.
         /// </summary>
         /// <param name="properties">The properties.</param>
-        protected PropertyMap(IDictionary<string, EntityProperty> properties) => 
+        protected PropertyMap(IDictionary<string, EntityProperty> properties) =>
             this.properties = properties;
 
         /// <summary>
@@ -68,13 +66,13 @@ namespace Streamstone
                 target.Add(property.Key, property.Value);
         }
 
-        internal static IEnumerable<KeyValuePair<string, EntityProperty>> ToDictionary(ITableEntity entity) => 
+        internal static IEnumerable<KeyValuePair<string, EntityProperty>> ToDictionary(ITableEntity entity) =>
             entity.WriteEntity(new OperationContext());
 
         static readonly object[] noargs = new object[0];
 
         /// <summary>
-        /// Converts given object instance to a sequence of named properties. 
+        /// Converts given object instance to a sequence of named properties.
         /// Only public properties of WATS compatible types will be converted.
         /// </summary>
         /// <param name="obj">The object.</param>
@@ -89,9 +87,9 @@ namespace Streamstone
         {
             Requires.NotNull(obj, nameof(obj));
 
-            return from property in obj.GetType().GetTypeInfo().DeclaredProperties 
-                   let key = property.Name 
-                   let value = property.GetValue(obj, noargs) 
+            return from property in obj.GetType().GetTypeInfo().DeclaredProperties
+                   let key = property.Name
+                   let value = property.GetValue(obj, noargs)
                    select ToKeyValuePair(key, value, property.PropertyType);
         }
 
@@ -133,13 +131,13 @@ namespace Streamstone
         }
 
         internal static IEnumerable<KeyValuePair<string, EntityProperty>> Clone(
-                        IEnumerable<KeyValuePair<string, EntityProperty>> properties) => 
+                        IEnumerable<KeyValuePair<string, EntityProperty>> properties) =>
             properties.Select(Clone);
 
-        static KeyValuePair<string, EntityProperty> Clone(KeyValuePair<string, EntityProperty> x) => 
+        static KeyValuePair<string, EntityProperty> Clone(KeyValuePair<string, EntityProperty> x) =>
             new KeyValuePair<string, EntityProperty>(x.Key, Clone(x.Value));
 
-        static EntityProperty Clone(EntityProperty source) => 
+        static EntityProperty Clone(EntityProperty source) =>
             EntityProperty.CreateEntityPropertyFromObject(source.PropertyAsObject);
     }
 }

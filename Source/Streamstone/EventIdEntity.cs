@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.Serialization;
 using Azure;
 using Azure.Data.Tables;
 
@@ -25,7 +26,7 @@ namespace Streamstone
         public DateTimeOffset? Timestamp { get; set; }
         public ETag ETag { get; set; }
 
-        [IgnoreProperty]
+        [IgnoreDataMember]
         public RecordedEvent Event
         {
             get; set;

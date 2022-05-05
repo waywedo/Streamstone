@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure;
+using Azure.Data.Tables;
 using Streamstone;
-
+using Streamstone.Utility;
 
 namespace Example.Scenarios
 {
@@ -31,15 +33,11 @@ namespace Example.Scenarios
 
             // the below code will scan all rows in a single physical partition
             // also, if there more than 1000 streams (header rows), pagination need to be utilized as per regular ATS limits
+            var filter = $"{nameof(StreamHeaderEntity.PartitionKey)} eq '{Partition.PartitionKey}'" +
+                    $" and {(nameof(StreamHeaderEntity.RowType))} eq 'STREAM'";
 
-            var filter = TableQuery.CombineFilters(
-                    TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, Partition.PartitionKey),
-                    TableOperators.And,
-                    TableQuery.GenerateFilterCondition(nameof(StreamHeaderEntity.RowType), QueryComparisons.Equal, "STREAM")
-                );
-
-            var count = Partition.Table
-                .ExecuteQuery<StreamHeaderEntity>(filter)
+            var count = (await Partition.Table
+                .ExecuteQueryAsync<StreamHeaderEntity>(filter))
                 .Count();
 
             Console.WriteLine(count);
@@ -66,8 +64,8 @@ namespace Example.Scenarios
             // the below code will scan only a limited range of rows in a single physical partition
             // also, if there more than 1000 streams (header rows), pagination need to be utilized as per regular ATS limits
 
-            var count = Partition
-                .RowKeyPrefixQuery<DynamicTableEntity>(StreamHeaderEntity.Prefix)
+            var count = (await Partition
+                .RowKeyPrefixQueryAsync<TableEntity>(StreamHeaderEntity.Prefix))
                 .ToList()
                 .Count;
 
@@ -103,7 +101,7 @@ namespace Example.Scenarios
             return new Partition(Partition.Table, Partition.PartitionKey + "|" + stream);
         }
 
-        class StreamHeaderEntity : TableEntity
+        class StreamHeaderEntity : ITableEntity
         {
             public const string Prefix = "STREAM|";
 
@@ -116,6 +114,10 @@ namespace Example.Scenarios
             }
 
             public string RowType { get; set; }
+            public string PartitionKey { get; set; }
+            public string RowKey { get; set; }
+            public DateTimeOffset? Timestamp { get; set; }
+            public ETag ETag { get; set; }
         }
 
         static EventData Event(params Include[] includes)
@@ -149,17 +151,18 @@ namespace Example.Scenarios
 
             async Task Record(Partition partition)
             {
-                var header = new DynamicTableEntity(directory.PartitionKey, partition.ToString());
-                await directory.Table.ExecuteAsync(TableOperation.Insert(header));
+                var header = new TableEntity(directory.PartitionKey, partition.ToString());
+                await directory.Table.AddEntityAsync(header);
             }
 
             public IEnumerable<string> Streams()
             {
                 // NOTE: if there more than 1000 streams (header rows) in directory,
                 //       pagination need to be implemented as per regular ATS limits
-                var filter = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, directory.PartitionKey);
-                return directory.Table.ExecuteQuery<DynamicTableEntity>(filter)
-                                .Select(x => x.RowKey);
+                return directory.Table.Query<TableEntity>(
+                    e => e.PartitionKey == directory.PartitionKey,
+                    select: new[] { nameof(TableEntity.RowKey) })
+                    .Select(e => e.RowKey);
             }
         }
     }
