@@ -43,18 +43,18 @@ namespace Streamstone
 
             class Insert
             {
-                readonly StreamEntity stream;
+                readonly TableEntity entity;
                 readonly Partition partition;
 
                 public Insert(Stream stream)
                 {
-                    this.stream = stream.Entity();
+                    entity = stream.TableEntity();
                     partition = stream.Partition;
                 }
 
                 public TableTransactionAction Prepare()
                 {
-                    return new TableTransactionAction(TableTransactionActionType.Add, stream);
+                    return new TableTransactionAction(TableTransactionActionType.Add, entity);
                 }
 
                 internal void Handle(RequestFailedException exception)
@@ -65,7 +65,7 @@ namespace Streamstone
                     ExceptionDispatchInfo.Capture(exception).Throw();
                 }
 
-                internal Stream Result() => From(partition, stream);
+                internal Stream Result() => From(partition, entity);
             }
         }
 

@@ -13,16 +13,17 @@ namespace Streamstone
         /// <summary>
         /// An empty collection of stream properties
         /// </summary>
-        public static readonly StreamProperties None = new StreamProperties();
+        public static readonly StreamProperties None = new();
 
         StreamProperties()
         {}
 
-        StreamProperties(IDictionary<string, EntityProperty> properties)
+        StreamProperties(IDictionary<string, object> properties)
             : base(properties)
-        {}
+        { }
 
-        internal static StreamProperties ReadEntity(IDictionary<string, EntityProperty> properties)
+
+        internal static StreamProperties ReadEntity(IDictionary<string, object> properties)
         {
             Requires.NotNull(properties, nameof(properties));
             return Build(properties);
@@ -36,11 +37,11 @@ namespace Streamstone
         /// <exception cref="ArgumentNullException">
         ///     If <paramref name="properties"/> is <c>null</c>
         /// </exception>
-        public static StreamProperties From(IDictionary<string, EntityProperty> properties)
-        {
-            Requires.NotNull(properties, nameof(properties));
-            return Build(Clone(properties));
-        }
+        //public static StreamProperties From(IDictionary<string, object> properties)
+        //{
+        //    Requires.NotNull(properties, nameof(properties));
+        //    return Build(Clone(properties));
+        //}
 
         /// <summary>
         /// Creates new instance of <see cref="StreamProperties"/> class using public properties of a given object.
@@ -68,13 +69,13 @@ namespace Streamstone
         /// <exception cref="ArgumentNullException">
         ///     If <paramref name="entity"/> is <c>null</c>
         /// </exception>
-        public static StreamProperties From(ITableEntity entity)
+        public static StreamProperties From(TableEntity entity)
         {
             Requires.NotNull(entity, nameof(entity));
-            return Build(ToDictionary(entity));
+            return Build(entity);
         }
 
-        static StreamProperties Build(IEnumerable<KeyValuePair<string, EntityProperty>> properties)
+        static StreamProperties Build(IDictionary<string, object> properties)
         {
             var filtered = properties
                 .Where(x => !IsReserved(x.Key))

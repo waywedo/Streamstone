@@ -1,4 +1,5 @@
 ﻿using Azure;
+using Azure.Data.Tables;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -133,6 +134,24 @@ namespace Streamstone
 
         StreamEntity Entity() =>
             new StreamEntity(Partition, ETag, Version, Properties);
+
+        static Stream From(Partition partition, TableEntity entity) =>
+            new Stream(partition, entity.ETag, (int)entity.GetInt32(nameof(Version)), StreamProperties.From(entity));
+
+        TableEntity TableEntity()
+        {
+            var entity = new TableEntity(Partition.Key, Partition.StreamRowKey())
+            {
+                { nameof(ETag), ETag },
+                { nameof(Version),  Version }
+            };
+            foreach (var property in Properties)
+            {
+                entity.Add(property.Key, property.Value);
+            }
+
+            return entity;
+        }
 
         IEnumerable<RecordedEvent> Record(IEnumerable<EventData> events) =>
             events.Select((e, i) => e.Record(Partition, Version + i + 1));

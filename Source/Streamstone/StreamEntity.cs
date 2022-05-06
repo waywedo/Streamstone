@@ -32,18 +32,18 @@ namespace Streamstone
         public DateTimeOffset? Timestamp { get; set; }
         public ETag ETag { get; set; }
 
-        public override void ReadEntity(IDictionary<string, EntityProperty> properties, OperationContext operationContext)
-        {
-            base.ReadEntity(properties, operationContext);
-            Properties = StreamProperties.ReadEntity(properties);
-        }
+        //public override void ReadEntity(IDictionary<string, EntityProperty> properties, OperationContext operationContext)
+        //{
+        //    base.ReadEntity(properties, operationContext);
+        //    Properties = StreamProperties.ReadEntity(properties);
+        //}
 
-        public override IDictionary<string, EntityProperty> WriteEntity(OperationContext operationContext)
-        {
-            var result = base.WriteEntity(operationContext);
-            Properties.WriteTo(result);
-            return result;
-        }
+        //public override IDictionary<string, EntityProperty> WriteEntity(OperationContext operationContext)
+        //{
+        //    var result = base.WriteEntity(operationContext);
+        //    Properties.WriteTo(result);
+        //    return result;
+        //}
 
         public static StreamEntity From(TableEntity entity)
         {
@@ -68,7 +68,7 @@ namespace Streamstone
 
             EntityOperation ReplaceOrMerge() => ReferenceEquals(Properties, StreamProperties.None)
                 ? new EntityOperation.UpdateMerge(this)
-                : (EntityOperation)new EntityOperation.Replace(this);
+                : new EntityOperation.Replace(this);
         }
 
         [IgnoreDataMember]
