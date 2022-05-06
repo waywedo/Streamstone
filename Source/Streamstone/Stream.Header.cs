@@ -138,14 +138,17 @@ namespace Streamstone
         static Stream From(Partition partition, TableEntity entity) =>
             new Stream(partition, entity.ETag, (int)entity.GetInt32(nameof(Version)), StreamProperties.From(entity));
 
-        TableEntity TableEntity()
+        TableEntity TableEntity() =>
+            TableEntity(Properties);
+
+        TableEntity TableEntity(StreamProperties properties)
         {
             var entity = new TableEntity(Partition.Key, Partition.StreamRowKey())
             {
                 { nameof(ETag), ETag },
                 { nameof(Version),  Version }
             };
-            foreach (var property in Properties)
+            foreach (var property in properties)
             {
                 entity.Add(property.Key, property.Value);
             }

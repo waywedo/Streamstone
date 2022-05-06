@@ -21,7 +21,7 @@ namespace Streamstone
             public static async Task<IEnumerable<TEntity>> RowKeyPrefixQueryAsync<TEntity>(this Partition partition, string prefix)
                 where TEntity : class, ITableEntity, new()
             {
-                var filter = $"{nameof(TableEntity.PartitionKey)} eq '{partition.PartitionKey}'" +
+                var filter = $"{nameof(ITableEntity.PartitionKey)} eq '{partition.PartitionKey}'" +
                     $" and {WhereRowKeyPrefixFilter(prefix)}";
 
                 return await ExecuteQueryAsync<TEntity>(partition.Table, filter);
@@ -52,8 +52,8 @@ namespace Streamstone
             {
                 var range = new PrefixRange(prefix);
 
-                return $"{nameof(TableEntity.RowKey)} ge '{range.Start}'" +
-                    $" and {nameof(TableEntity.RowKey)} lt '{range.End}'";
+                return $"{nameof(ITableEntity.RowKey)} ge '{range.Start}'" +
+                    $" and {nameof(ITableEntity.RowKey)} lt '{range.End}'";
             }
         }
 

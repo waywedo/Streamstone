@@ -161,7 +161,7 @@ namespace Example.Scenarios
                 //       pagination need to be implemented as per regular ATS limits
                 return directory.Table.Query<TableEntity>(
                     e => e.PartitionKey == directory.PartitionKey,
-                    select: new[] { nameof(TableEntity.RowKey) })
+                    select: new[] { nameof(ITableEntity.RowKey) })
                     .Select(e => e.RowKey);
             }
         }

@@ -316,19 +316,18 @@ namespace Streamstone
 
             class Replace
             {
-                readonly StreamEntity stream;
+                readonly TableEntity entity;
                 readonly Partition partition;
 
                 public Replace(Stream stream, StreamProperties properties)
                 {
-                    this.stream = stream.Entity();
-                    this.stream.Properties = properties;
+                    entity = stream.TableEntity(properties);
                     partition = stream.Partition;
                 }
 
                 internal TableTransactionAction Prepare()
                 {
-                    return new TableTransactionAction(TableTransactionActionType.UpdateReplace, stream);
+                    return new TableTransactionAction(TableTransactionActionType.UpdateReplace, entity);
                 }
 
                 internal void Handle(RequestFailedException exception)
@@ -339,7 +338,7 @@ namespace Streamstone
                     ExceptionDispatchInfo.Capture(exception).Throw();
                 }
 
-                internal Stream Result() => From(partition, stream);
+                internal Stream Result() => From(partition, entity);
             }
         }
 
@@ -358,7 +357,7 @@ namespace Streamstone
             {
                 try
                 {
-                    var entity = await table.GetEntityAsync<StreamEntity>(partition.PartitionKey, partition.StreamRowKey());
+                    var entity = await table.GetEntityAsync<TableEntity>(partition.PartitionKey, partition.StreamRowKey());
                     return new StreamOpenResult(true, From(partition, entity));
                 }
                 catch (RequestFailedException)
@@ -406,17 +405,17 @@ namespace Streamstone
                 var rowKeyStart = partition.EventVersionRowKey(startVersion);
                 var rowKeyEnd = partition.EventVersionRowKey(startVersion + sliceSize - 1);
 
-                var filter = $"{nameof(TableEntity.PartitionKey)} eq '{partition.PartitionKey}'" +
-                    $" and {nameof(TableEntity.RowKey)} ge '{rowKeyStart}'" +
-                    $" and {nameof(TableEntity.RowKey)} le '{rowKeyEnd}'";
+                var filter = $"{nameof(ITableEntity.PartitionKey)} eq '{partition.PartitionKey}'" +
+                    $" and {nameof(ITableEntity.RowKey)} ge '{rowKeyStart}'" +
+                    $" and {nameof(ITableEntity.RowKey)} le '{rowKeyEnd}'";
 
                 return table.QueryAsync<TableEntity>(filter);
             }
 
             AsyncPageable<TableEntity> StreamRowQuery()
             {
-                var filter = $"{nameof(TableEntity.PartitionKey)} eq '{partition.PartitionKey}'" +
-                    $" and {nameof(TableEntity.RowKey)} eq '{partition.StreamRowKey()}'";
+                var filter = $"{nameof(ITableEntity.PartitionKey)} eq '{partition.PartitionKey}'" +
+                    $" and {nameof(ITableEntity.RowKey)} eq '{partition.StreamRowKey()}'";
 
                 return table.QueryAsync<TableEntity>(filter);
             }
@@ -442,7 +441,7 @@ namespace Streamstone
                 return result;
             }
 
-            Stream BuildStream(TableEntity entity) => From(partition, StreamEntity.From(entity));
+            Stream BuildStream(TableEntity entity) => From(partition, entity);
 
             static T[] BuildEvents(IEnumerable<TableEntity> entities, Func<TableEntity, T> transform) =>
                 entities.Select(transform).ToArray();
