@@ -1,17 +1,15 @@
 ﻿using System.Threading.Tasks;
-
-using Microsoft.Azure.Cosmos.Table;
-
+using Azure.Data.Tables;
 using Streamstone;
 
 namespace Example.Scenarios
 {
     public class S11_Sharding_streams : Scenario
     {
-        readonly CloudStorageAccount[] pool =              
+        readonly string[] pool =
         {
-            CloudStorageAccount.DevelopmentStorageAccount,
-            CloudStorageAccount.DevelopmentStorageAccount // pretend this is some other account
+            "UseDevelopmentStorage=true",
+            "UseDevelopmentStorage=true" // pretend this is some other account
         };
 
         public override async Task RunAsync()
@@ -26,8 +24,8 @@ namespace Example.Scenarios
         Partition Resolve(string stream)
         {
             var account = pool[Shard.Resolve(stream, pool.Length)];
-            var client = account.CreateCloudTableClient();
-            var table = client.GetTableReference(Table.Name);
+            var serviceClient = new TableServiceClient(account);
+            var table = serviceClient.GetTableClient(Table.Name);
             return new Partition(table, $"{Partition.Key}_{stream}");
         }
     }

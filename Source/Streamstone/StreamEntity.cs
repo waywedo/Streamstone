@@ -24,12 +24,16 @@ namespace Streamstone
             Properties = properties;
         }
 
-        public int Version { get; set; }
-        public StreamProperties Properties { get; set; }
         public string PartitionKey { get; set; }
         public string RowKey { get; set; }
         public DateTimeOffset? Timestamp { get; set; }
         public ETag ETag { get; set; }
+
+        public int Version { get; set; }
+        public StreamProperties Properties { get; set; }
+
+        [IgnoreDataMember]
+        public Partition Partition { get; set; }
 
         public static StreamEntity From(TableEntity entity)
         {
@@ -55,12 +59,6 @@ namespace Streamstone
             EntityOperation ReplaceOrMerge() => ReferenceEquals(Properties, StreamProperties.None)
                 ? new EntityOperation.UpdateMerge(this)
                 : new EntityOperation.Replace(this);
-        }
-
-        [IgnoreDataMember]
-        public Partition Partition
-        {
-            get; set;
         }
     }
 }

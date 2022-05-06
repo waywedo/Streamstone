@@ -20,16 +20,14 @@ namespace Streamstone
             Version = @event.Version;
         }
 
-        public int Version { get; set; }
         public string PartitionKey { get; set; }
         public string RowKey { get; set; }
         public DateTimeOffset? Timestamp { get; set; }
         public ETag ETag { get; set; }
 
+        public int Version { get; set; }
+
         [IgnoreDataMember]
-        public RecordedEvent Event
-        {
-            get; set;
-        }
+        public RecordedEvent Event { get; set; }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Azure.Data.Tables;
 
@@ -395,7 +397,8 @@ namespace Streamstone
 
         private static void CopyFromTableEntity(object target, TableEntity entity)
         {
-            foreach (var property in target.GetType().GetTypeInfo().DeclaredProperties)
+            foreach (var property in target.GetType().GetTypeInfo().DeclaredProperties
+                .Where(p => p.GetCustomAttribute<IgnoreDataMemberAttribute>() == null))
             {
                 if (property.PropertyType.IsAssignableTo(typeof(PropertyMap)))
                 {

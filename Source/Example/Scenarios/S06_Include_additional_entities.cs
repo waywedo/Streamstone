@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-
-using Microsoft.Azure.Cosmos.Table;
-
+using Azure;
+using Azure.Data.Tables;
 using Newtonsoft.Json;
-
 using Streamstone;
 
 namespace Example.Scenarios
@@ -14,9 +12,9 @@ namespace Example.Scenarios
         public override async Task RunAsync()
         {
             var existent = await Stream.TryOpenAsync(Partition);
-	        var stream = existent.Found ? existent.Stream : new Stream(Partition);
+            var stream = existent.Found ? existent.Stream : new Stream(Partition);
 
-            Console.WriteLine("Writing to new stream along with making snapshot in partition '{0}'", 
+            Console.WriteLine("Writing to new stream along with making snapshot in partition '{0}'",
                               stream.Partition);
 
             var snapshot = Include.Insert(new InventoryItemShapshot
@@ -53,15 +51,20 @@ namespace Example.Scenarios
             };
 
             return new EventData(
-                            EventId.From(id), 
-                            EventProperties.From(properties), 
+                            EventId.From(id),
+                            EventProperties.From(properties),
                             EventIncludes.From(includes));
         }
 
-        class InventoryItemShapshot : TableEntity
+        class InventoryItemShapshot : ITableEntity
         {
+            public string PartitionKey { get; set; }
+            public string RowKey { get; set; }
+            public DateTimeOffset? Timestamp { get; set; }
+            public ETag ETag { get; set; }
+
             public string Name { get; set; }
-            public int Count   { get; set; }
+            public int Count { get; set; }
             public int Version { get; set; }
         }
     }

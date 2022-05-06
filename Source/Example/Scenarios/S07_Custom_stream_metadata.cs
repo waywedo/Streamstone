@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-
-using Microsoft.Azure.Cosmos.Table;
 using Streamstone;
 
 namespace Example.Scenarios
@@ -20,15 +18,15 @@ namespace Example.Scenarios
         {
             var partition = new Partition(Table, Id + ".a");
 
-            var properties = new Dictionary<string, EntityProperty>
+            var properties = new Dictionary<string, object>
             {
-                {"Created", new EntityProperty(DateTimeOffset.Now)},
-                {"Active",  new EntityProperty(true)}
+                {"Created", DateTimeOffset.Now},
+                {"Active",  true}
             };
-            
+
             await Stream.ProvisionAsync(partition, StreamProperties.From(properties));
-            
-            Console.WriteLine("Stream metadata specified during provisioning in partition '{0}'", 
+
+            Console.WriteLine("Stream metadata specified during provisioning in partition '{0}'",
                               partition);
 
             var stream = await Stream.OpenAsync(partition);
@@ -39,16 +37,16 @@ namespace Example.Scenarios
         {
             var partition = new Partition(Table, Id + ".b");
 
-            var properties = new Dictionary<string, EntityProperty>
+            var properties = new Dictionary<string, object>
             {
-                {"Created", new EntityProperty(DateTimeOffset.Now)},
-                {"Active",  new EntityProperty(true)}
+                {"Created", DateTimeOffset.Now},
+                {"Active",  true}
             };
 
             var stream = new Stream(partition, StreamProperties.From(properties));
             await Stream.WriteAsync(stream, new EventData());
 
-            Console.WriteLine("Stream metadata specified during writing to new stream in partition '{0}'", 
+            Console.WriteLine("Stream metadata specified during writing to new stream in partition '{0}'",
                               partition);
 
             stream = await Stream.OpenAsync(partition);
@@ -59,21 +57,21 @@ namespace Example.Scenarios
         {
             var partition = new Partition(Table, Id + ".c");
 
-            var properties = new Dictionary<string, EntityProperty>
+            var properties = new Dictionary<string, object>
             {
-                {"Created", new EntityProperty(DateTimeOffset.Now)},
-                {"Active",  new EntityProperty(true)}
+                {"Created", DateTimeOffset.Now},
+                {"Active",  true}
             };
 
             await Stream.ProvisionAsync(partition, StreamProperties.From(properties));
 
-            Console.WriteLine("Stream metadata specified for stream in partition '{0}'", 
+            Console.WriteLine("Stream metadata specified for stream in partition '{0}'",
                               partition);
 
             var stream = await Stream.OpenAsync(partition);
             Print(stream.Properties);
 
-            properties["Active"] = new EntityProperty(false);
+            properties["Active"] = false;
             await Stream.SetPropertiesAsync(stream, StreamProperties.From(properties));
 
             Console.WriteLine("Updated stream metadata in partition '{0}'", partition);
@@ -82,10 +80,10 @@ namespace Example.Scenarios
             Print(stream.Properties);
         }
 
-        static void Print(IEnumerable<KeyValuePair<string, EntityProperty>> properties)
+        static void Print(IEnumerable<KeyValuePair<string, object>> properties)
         {
             foreach (var property in properties)
-                Console.WriteLine("\t{0}={1}", property.Key, property.Value.PropertyAsObject);
+                Console.WriteLine("\t{0}={1}", property.Key, property.Value);
         }
     }
 }
