@@ -8,8 +8,6 @@ namespace Streamstone
 {
     public abstract class PropertyMap : Dictionary<string, object>
     {
-        static readonly object[] NoArgs = Array.Empty<object>();
-
         protected PropertyMap()
         {
         }
@@ -24,7 +22,7 @@ namespace Streamstone
             Requires.NotNull(obj, nameof(obj));
 
             return obj.GetType().GetTypeInfo().DeclaredProperties
-                .ToDictionary(p => p.Name, p => p.GetValue(obj, NoArgs));
+                .ToDictionary(p => p.Name, p => p.GetValue(obj));
         }
 
         public abstract void CopyFrom(TableEntity entity);

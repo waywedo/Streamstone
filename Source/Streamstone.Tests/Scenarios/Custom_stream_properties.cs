@@ -13,7 +13,7 @@ namespace Streamstone.Scenarios
         public void When_passing_property_with_reserved_name()
         {
             var reserved = ReservedStreamProperties()
-                .ToDictionary(p => p, _ => 42);
+                .ToDictionary(p => p, _ => (object)42);
 
             var properties = StreamProperties.From(reserved);
 
@@ -25,8 +25,7 @@ namespace Streamstone.Scenarios
         {
             return typeof(StreamEntity)
                     .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                    .Where(p => !p.GetCustomAttributes<IgnoreDataMemberAttribute>(true).Any())
-                    .Where(p => p.Name != "Properties")
+                    .Where(p => !p.GetCustomAttributes<IgnoreDataMemberAttribute>(true).Any() && p.Name != "Properties")
                     .Select(p => p.Name);
         }
     }

@@ -38,6 +38,19 @@ namespace Streamstone
         }
 
         /// <summary>
+        /// Creates new instance of <see cref="EventProperties"/> class using given dictionary of entity properties
+        /// </summary>
+        /// <param name="properties">The properties.</param>
+        /// <returns>New instance of <see cref="EventProperties"/> class</returns>
+        /// <exception cref="ArgumentNullException">
+        ///     If <paramref name="properties"/> is <c>null</c>
+        /// </exception>
+        public static EventProperties From(IDictionary<string, object> properties)
+        {
+            return Build(properties);
+        }
+
+        /// <summary>
         /// Creates new instance of <see cref="EventProperties"/> class using public properties of a given object.
         /// All public properties should be of WATS compatible type..
         /// </summary>

@@ -145,9 +145,10 @@ namespace Streamstone
         {
             var entity = new TableEntity(Partition.Key, Partition.StreamRowKey())
             {
-                { nameof(ETag), ETag },
-                { nameof(Version),  Version }
+                { nameof(Version), Version }
             };
+            entity.ETag = ETag;
+
             foreach (var property in properties)
             {
                 entity.Add(property.Key, property.Value);
