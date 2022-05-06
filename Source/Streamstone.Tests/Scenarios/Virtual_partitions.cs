@@ -1,10 +1,6 @@
-﻿using System;
-using System.Linq;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-
-using Microsoft.Azure.Cosmos.Table;
-
+using Azure.Data.Tables;
 using NUnit.Framework;
 
 namespace Streamstone.Scenarios
@@ -12,8 +8,8 @@ namespace Streamstone.Scenarios
     [TestFixture]
     public class Virtual_partitions
     {
-        CloudTable table;
-        
+        TableClient table;
+
         Partition partition;
         Partition virtual1;
         Partition virtual2;
@@ -24,8 +20,8 @@ namespace Streamstone.Scenarios
             table = Storage.SetUp();
 
             partition = new Partition(table, "test");
-            virtual1  = new Partition(table, "test|123");
-            virtual2  = new Partition(table, "test", "456");
+            virtual1 = new Partition(table, "test|123");
+            virtual2 = new Partition(table, "test", "456");
         }
 
         [Test]
@@ -58,8 +54,8 @@ namespace Streamstone.Scenarios
             await Stream.WriteAsync(stream1, e1, e2);
             await Stream.WriteAsync(stream2, e1, e2);
 
-            Assert.That(partition.RetrieveAll().Count, 
-                Is.EqualTo(2 + 2*(2*2)));
+            Assert.That(partition.RetrieveAll().Count,
+                Is.EqualTo(2 + 2 * (2 * 2)));
 
             var slice1 = await Stream.ReadAsync<TestRecordedEventEntity>(virtual1);
             var slice2 = await Stream.ReadAsync<TestRecordedEventEntity>(virtual2);
@@ -70,10 +66,10 @@ namespace Streamstone.Scenarios
 
         static EventData CreateEvent(string id)
         {
-            var properties = new Dictionary<string, EntityProperty>
+            var properties = new Dictionary<string, object>
             {
-                {"Type", new EntityProperty("StreamChanged")},
-                {"Data", new EntityProperty("{}")}
+                {"Type", "StreamChanged"},
+                {"Data", "{}"}
             };
 
             return new EventData(EventId.From(id), EventProperties.From(properties));

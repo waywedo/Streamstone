@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-
-using NUnit.Framework;
+using Azure.Data.Tables;
 using ExpectedObjects;
-
-using Microsoft.Azure.Cosmos.Table;
+using NUnit.Framework;
 
 namespace Streamstone.Scenarios
 {
@@ -14,7 +11,7 @@ namespace Streamstone.Scenarios
     public class Provisioning_stream
     {
         Partition partition;
-        CloudTable table;
+        TableClient table;
 
         [SetUp]
         public void SetUp()
@@ -29,7 +26,7 @@ namespace Streamstone.Scenarios
             partition.InsertStreamEntity();
 
             Assert.ThrowsAsync<ConcurrencyConflictException>(
-                async ()=> await Stream.ProvisionAsync(partition));
+                async () => await Stream.ProvisionAsync(partition));
         }
 
         [Test]
@@ -37,7 +34,7 @@ namespace Streamstone.Scenarios
         {
             var stream = await Stream.ProvisionAsync(partition);
             var entity = partition.RetrieveStreamEntity();
-            
+
             var expectedStream = new Stream(partition, entity.ETag, 0, StreamProperties.None);
             expectedStream.ToExpectedObject().ShouldEqual(stream);
 
@@ -53,10 +50,10 @@ namespace Streamstone.Scenarios
         [Test]
         public async Task When_provisioning_along_with_custom_properties()
         {
-            var properties = new Dictionary<string, EntityProperty>
+            var properties = new Dictionary<string, object>
             {
-                {"Created", new EntityProperty(DateTimeOffset.Now)},
-                {"Active",  new EntityProperty(true)}
+                {"Created", DateTimeOffset.Now},
+                {"Active",  true}
             };
 
             var stream = await Stream.ProvisionAsync(partition, StreamProperties.From(properties));
@@ -65,7 +62,7 @@ namespace Streamstone.Scenarios
             var expectedStream = new Stream
             (
                 partition,
-                entity.ETag, 0, 
+                entity.ETag, 0,
                 StreamProperties.From(properties)
             );
 

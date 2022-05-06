@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
-
-using Microsoft.Azure.Cosmos.Table;
-
+using Azure.Data.Tables;
 using NUnit.Framework;
 
 namespace Streamstone.Scenarios
@@ -13,7 +11,7 @@ namespace Streamstone.Scenarios
     [TestFixture, Explicit]
     public class Cosmos_specifics
     {
-        CloudTable table;
+        TableClient table;
 
         [SetUp]
         public void SetUp()
@@ -21,12 +19,11 @@ namespace Streamstone.Scenarios
             var connectionString = Environment.GetEnvironmentVariable(
                 "Streamstone-Test-Cosmos-Storage", EnvironmentVariableTarget.User);
 
-            var account = CloudStorageAccount.Parse(connectionString);
-            var client = account.CreateCloudTableClient();
+            var serviceClient = new TableServiceClient(connectionString);
 
-            table = client.GetTableReference("SSTEST");
-            table.DeleteIfExistsAsync().GetAwaiter().GetResult();
-            table.CreateIfNotExistsAsync().GetAwaiter().GetResult();
+            table = serviceClient.GetTableClient("SSTEST");
+            table.Delete();
+            table.Create();
         }
 
         [Test]
@@ -89,10 +86,10 @@ namespace Streamstone.Scenarios
 
         static EventData CreateEvent(int num)
         {
-            var properties = new Dictionary<string, EntityProperty>
+            var properties = new Dictionary<string, object>
             {
-                {"Type", new EntityProperty("TestEvent")},
-                {"Data", new EntityProperty(num)}
+                {"Type", "TestEvent"},
+                {"Data", num}
             };
 
             return new EventData(EventId.None, EventProperties.From(properties));

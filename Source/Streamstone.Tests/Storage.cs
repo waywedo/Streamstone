@@ -1,46 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using Azure.Data.Tables;
 using ExpectedObjects;
-
-using Microsoft.Azure.Cosmos.Table;
+using Streamstone.Utility;
 
 namespace Streamstone
 {
-    using Utility;
     static class Storage
     {
         const string TableName = "Streams";
 
-        public static CloudTable SetUp()
+        public static TableClient SetUp()
         {
             var account = TestStorageAccount();
 
-            return account == CloudStorageAccount.DevelopmentStorageAccount 
-                    ? SetUpDevelopmentStorageTable(account) 
+            return account == "UseDevelopmentStorage=true"
+                    ? SetUpDevelopmentStorageTable(account)
                     : SetUpAzureStorageTable(account);
         }
 
-        static CloudTable SetUpDevelopmentStorageTable(CloudStorageAccount account)
+        static TableClient SetUpDevelopmentStorageTable(string account)
         {
-            var client = account
-                .CreateCloudTableClient();
+            var serviceClient = new TableServiceClient(account);
 
-            var table = client.GetTableReference(TableName);
-            table.DeleteIfExistsAsync().Wait();
-            table.CreateAsync().Wait();
+            var table = serviceClient.GetTableClient(TableName);
+            table.Delete();
+            table.Create();
 
             return table;
         }
 
-        static CloudTable SetUpAzureStorageTable(CloudStorageAccount account)
+        static TableClient SetUpAzureStorageTable(string account)
         {
-            var client = account
-                .CreateCloudTableClient();
+            var serviceClient = new TableServiceClient(account);
 
-            var table = client.GetTableReference(TableName);
-            table.CreateIfNotExistsAsync().Wait();
+            var table = serviceClient.GetTableClient(TableName);
+            table.Create();
 
             var entities = RetrieveAll(table);
             if (entities.Count == 0)
@@ -50,23 +46,21 @@ namespace Streamstone
             var batches = (int)Math.Ceiling((double)entities.Count / maxBatchSize);
             foreach (var batch in Enumerable.Range(0, batches))
             {
-                var operation = new TableBatchOperation();
+                var operation = new List<TableTransactionAction>();
                 var slice = entities.Skip(batch * maxBatchSize).Take(maxBatchSize).ToList();
-                slice.ForEach(operation.Delete);
-                table.ExecuteBatchAsync(operation).Wait();
+                slice.ForEach(e => operation.Add(new TableTransactionAction(TableTransactionActionType.Delete, e)));
+                table.SubmitTransaction(operation);
             }
 
             return table;
         }
 
-        static CloudStorageAccount TestStorageAccount()
+        static string TestStorageAccount()
         {
             var connectionString = Environment.GetEnvironmentVariable(
                 "Streamstone-Test-Storage", EnvironmentVariableTarget.User);
 
-            return connectionString != null 
-                    ? CloudStorageAccount.Parse(connectionString) 
-                    : CloudStorageAccount.DevelopmentStorageAccount;
+            return connectionString ?? "UseDevelopmentStorage=true";
         }
 
         public static StreamEntity InsertStreamEntity(this Partition partition, int version = 0)
@@ -78,7 +72,7 @@ namespace Streamstone
                 Version = version
             };
 
-            partition.Table.ExecuteAsync(TableOperation.Insert(entity)).Wait();
+            partition.Table.AddEntity(entity);
             return entity;
         }
 
@@ -87,21 +81,13 @@ namespace Streamstone
             var entity = RetrieveStreamEntity(partition);
             entity.Version = version;
 
-            partition.Table.ExecuteAsync(TableOperation.Replace(entity)).Wait();
+            partition.Table.UpdateEntity(entity, entity.ETag, TableUpdateMode.Replace);
             return entity;
         }
 
         public static StreamEntity RetrieveStreamEntity(this Partition partition)
         {
-            var filter =
-                TableQuery.CombineFilters(
-                    TableQuery.GenerateFilterCondition(nameof(StreamEntity.PartitionKey), QueryComparisons.Equal, partition.PartitionKey),
-                    TableOperators.And,
-                    TableQuery.GenerateFilterCondition(nameof(StreamEntity.RowKey), QueryComparisons.Equal, Api.StreamRowKey));
-
-            var query = new TableQuery<StreamEntity>().Where(filter);
-
-            var segment = partition.Table.ExecuteQuerySegmentedAsync(query, null).Result;
+            var segment = partition.Table.Query<StreamEntity>(e => e.PartitionKey == partition.PartitionKey && e.RowKey == Api.StreamRowKey);
             return segment.SingleOrDefault();
         }
 
@@ -112,16 +98,16 @@ namespace Streamstone
                 var e = new EventEntity
                 {
                     PartitionKey = partition.PartitionKey,
-                    RowKey = (i+1).FormatEventRowKey()
+                    RowKey = (i + 1).FormatEventRowKey()
                 };
 
-                partition.Table.ExecuteAsync(TableOperation.Insert(e)).Wait();
+                partition.Table.AddEntity(e);
             }
         }
 
         public static EventEntity[] RetrieveEventEntities(this Partition partition)
         {
-            return partition.RowKeyPrefixQuery<EventEntity>(prefix: Api.EventRowKeyPrefix).ToArray();
+            return partition.RowKeyPrefixQueryAsync<EventEntity>(Api.EventRowKeyPrefix).Result.ToArray();
         }
 
         public static void InsertEventIdEntities(this Partition partition, params string[] ids)
@@ -134,52 +120,23 @@ namespace Streamstone
                     RowKey = id.FormatEventIdRowKey(),
                 };
 
-                partition.Table.ExecuteAsync(TableOperation.Insert(e)).Wait();
+                partition.Table.AddEntity(e);
             }
         }
 
         public static EventIdEntity[] RetrieveEventIdEntities(this Partition partition)
         {
-            return partition.RowKeyPrefixQuery<EventIdEntity>(prefix: Api.EventIdRowKeyPrefix).ToArray();
+            return partition.RowKeyPrefixQueryAsync<EventIdEntity>(Api.EventIdRowKeyPrefix).Result.ToArray();
         }
 
-        public static List<DynamicTableEntity> RetrieveAll(this Partition partition)
+        public static List<TableEntity> RetrieveAll(this Partition partition)
         {
-            var filter = TableQuery.GenerateFilterCondition(nameof(StreamEntity.PartitionKey), QueryComparisons.Equal, partition.PartitionKey);
-            var query = new TableQuery<DynamicTableEntity>().Where(filter);
-
-            var entities = new List<DynamicTableEntity>();
-            TableContinuationToken token = null;
-
-            do
-            {
-                var segment = partition.Table.ExecuteQuerySegmentedAsync(query, token).Result;
-                token = segment.ContinuationToken;
-
-                entities.AddRange(segment.Results);
-            }
-            while (token != null);
-
-            return entities;
+            return partition.Table.Query<TableEntity>(e => e.PartitionKey == partition.PartitionKey).ToList();
         }
 
-        static List<DynamicTableEntity> RetrieveAll(CloudTable table)
+        static List<TableEntity> RetrieveAll(TableClient table)
         {
-            var entities = new List<DynamicTableEntity>();
-            TableContinuationToken token = null;
-
-            do
-            {
-                var page = new TableQuery<DynamicTableEntity>().Take(512); 
-
-                var segment = table.ExecuteQuerySegmentedAsync(page, token).Result;
-                token = segment.ContinuationToken;
-                
-                entities.AddRange(segment.Results);
-            }
-            while (token != null);
-
-            return entities;
+            return table.Query<TableEntity>().ToList();
         }
 
         public static PartitionContents CaptureContents(this Partition partition, Action<PartitionContents> continueWith)
@@ -190,7 +147,7 @@ namespace Streamstone
         public class PartitionContents
         {
             readonly Partition partition;
-            readonly List<DynamicTableEntity> captured;
+            readonly List<TableEntity> captured;
 
             public PartitionContents(Partition partition, Action<PartitionContents> continueWith)
             {

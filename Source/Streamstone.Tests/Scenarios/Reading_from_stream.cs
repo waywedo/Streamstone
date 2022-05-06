@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
-using Microsoft.Azure.Cosmos.Table;
+using Azure;
+using Azure.Data.Tables;
 
 using NUnit.Framework;
 
@@ -13,7 +13,7 @@ namespace Streamstone.Scenarios
     public class Reading_from_stream
     {
         Partition partition;
-        CloudTable table;
+        TableClient table;
 
         [SetUp]
         public void SetUp()
@@ -26,10 +26,10 @@ namespace Streamstone.Scenarios
         public void When_start_version_is_less_than_1()
         {
             Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-                async ()=> await Stream.ReadAsync<TestEventEntity>(partition, 0));
+                async () => await Stream.ReadAsync<TestEventEntity>(partition, 0));
 
             Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-                async ()=> await Stream.ReadAsync<TestEventEntity>(partition, -1));
+                async () => await Stream.ReadAsync<TestEventEntity>(partition, -1));
         }
 
         [Test]
@@ -44,19 +44,19 @@ namespace Streamstone.Scenarios
             await Stream.ProvisionAsync(partition);
 
             var slice = await Stream.ReadAsync<TestEventEntity>(partition);
-            
+
             Assert.That(slice.IsEndOfStream, Is.True);
             Assert.That(slice.Events.Length, Is.EqualTo(0));
         }
-        
+
         [Test]
         public async Task When_version_is_greater_than_current_version_of_stream()
         {
-            EventData[] events = {CreateEvent("e1"), CreateEvent("e2")};
+            EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
             await Stream.WriteAsync(new Stream(partition), events);
 
             var slice = await Stream.ReadAsync<TestEventEntity>(partition, events.Length + 1);
-            
+
             Assert.That(slice.IsEndOfStream, Is.True);
             Assert.That(slice.Events.Length, Is.EqualTo(0));
         }
@@ -64,7 +64,7 @@ namespace Streamstone.Scenarios
         [Test]
         public async Task When_all_events_fit_to_single_slice()
         {
-            EventData[] events = {CreateEvent("e1"), CreateEvent("e2")};
+            EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
             await Stream.WriteAsync(new Stream(partition), events);
 
             var slice = await Stream.ReadAsync<TestEventEntity>(partition, sliceSize: 2);
@@ -76,11 +76,11 @@ namespace Streamstone.Scenarios
         [Test]
         public async Task When_all_events_do_not_fit_single_slice()
         {
-            EventData[] events = {CreateEvent("e1"), CreateEvent("e2")};
+            EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
             await Stream.WriteAsync(new Stream(partition), events);
 
             var slice = await Stream.ReadAsync<TestRecordedEventEntity>(partition, sliceSize: 1);
-            
+
             Assert.That(slice.IsEndOfStream, Is.False);
             Assert.That(slice.Events.Length, Is.EqualTo(1));
             Assert.That(slice.Events[0].Version, Is.EqualTo(1));
@@ -129,8 +129,8 @@ namespace Streamstone.Scenarios
             Assert.That(slice.Events.Length, Is.EqualTo(2));
 
             var e = slice.Events[0];
-            Assert.That(e["Type"].StringValue, Is.EqualTo("StreamChanged"));
-            Assert.That(e["Data"].StringValue, Is.EqualTo("{}"));
+            Assert.That(e["Type"], Is.EqualTo("StreamChanged"));
+            Assert.That(e["Data"], Is.EqualTo("{}"));
         }
 
         [Test]
@@ -139,7 +139,7 @@ namespace Streamstone.Scenarios
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
             await Stream.WriteAsync(new Stream(partition), events);
 
-            var slice = await Stream.ReadAsync<DynamicTableEntity>(partition, sliceSize: 2);
+            var slice = await Stream.ReadAsync<TableEntity>(partition, sliceSize: 2);
 
             Assert.That(slice.IsEndOfStream, Is.True);
             Assert.That(slice.Events.Length, Is.EqualTo(2));
@@ -147,9 +147,9 @@ namespace Streamstone.Scenarios
             var e = slice.Events[0];
             AssertSystemProperties(e);
 
-            Assert.That(e.Properties["Id"].StringValue, Is.EqualTo("e1"));
-            Assert.That(e.Properties["Type"].StringValue, Is.EqualTo("StreamChanged"));
-            Assert.That(e.Properties["Data"].StringValue, Is.EqualTo("{}"));
+            Assert.That(e.GetString("Id"), Is.EqualTo("e1"));
+            Assert.That(e.GetString("Type"), Is.EqualTo("StreamChanged"));
+            Assert.That(e.GetString("Data"), Is.EqualTo("{}"));
         }
 
         [Test]
@@ -179,20 +179,25 @@ namespace Streamstone.Scenarios
             Assert.That(e.Timestamp, Is.Not.EqualTo(DateTimeOffset.MinValue));
         }
 
-        class CustomTableEntity : TableEntity
+        class CustomTableEntity : ITableEntity
         {
-            public string Id   { get; set; }
+            public string PartitionKey { get; set; }
+            public string RowKey { get; set; }
+            public DateTimeOffset? Timestamp { get; set; }
+            public ETag ETag { get; set; }
+
+            public string Id { get; set; }
             public string Type { get; set; }
             public string Data { get; set; }
         }
 
         static EventData CreateEvent(string id)
         {
-            var properties = new Dictionary<string, EntityProperty>
+            var properties = new Dictionary<string, object>
             {
-                {"Id",   new EntityProperty(id)},
-                {"Type", new EntityProperty("StreamChanged")},
-                {"Data", new EntityProperty("{}")}
+                {"Id",   id},
+                {"Type", "StreamChanged"},
+                {"Data", "{}"}
             };
 
             return new EventData(EventId.From(id), EventProperties.From(properties));

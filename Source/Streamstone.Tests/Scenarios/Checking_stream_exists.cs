@@ -1,8 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
-
-using Microsoft.Azure.Cosmos.Table;
-
+﻿using System.Threading.Tasks;
+using Azure.Data.Tables;
 using NUnit.Framework;
 
 namespace Streamstone.Scenarios
@@ -11,7 +8,7 @@ namespace Streamstone.Scenarios
     public class Checking_stream_exists
     {
         Partition partition;
-        CloudTable table;
+        TableClient table;
 
         [SetUp]
         public void SetUp()
@@ -26,7 +23,7 @@ namespace Streamstone.Scenarios
             await Stream.ProvisionAsync(partition);
             Assert.True(await Stream.ExistsAsync(partition));
         }
-        
+
         [Test]
         public async Task When_stream_does_not_exist()
         {

@@ -2,20 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
-using Microsoft.Azure.Cosmos.Table;
-
+using Azure;
+using Azure.Data.Tables;
 using NUnit.Framework;
 
 namespace Streamstone.Scenarios
 {
-    using Utility;
-
     [TestFixture]
     public class Including_additional_entities
     {
         Partition partition;
-        CloudTable table;
+        TableClient table;
 
         [SetUp]
         public void SetUp()
@@ -32,7 +29,7 @@ namespace Streamstone.Scenarios
 
             EventData[] events =
             {
-                CreateEvent("e1", Include.Insert(entity1)), 
+                CreateEvent("e1", Include.Insert(entity1)),
                 CreateEvent("e2", Include.Insert(entity2))
             };
 
@@ -48,24 +45,24 @@ namespace Streamstone.Scenarios
             Assert.That(result.Includes[0], Is.SameAs(entity1));
             Assert.That(result.Includes[0].ETag, Is.Not.Null.Or.Empty);
             Assert.That(result.Includes[1], Is.SameAs(entity2));
-            Assert.That(result.Includes[1].ETag, Is.Not.Null.Or.Empty);            
+            Assert.That(result.Includes[1].ETag, Is.Not.Null.Or.Empty);
         }
-        
+
         [Test]
         public async Task When_include_has_conflict()
         {
             var entity = new TestEntity("INV-0001");
             var include = Include.Insert(entity);
 
-            EventData[] events = {CreateEvent("e1"), CreateEvent("e2", include)};
+            EventData[] events = { CreateEvent("e1"), CreateEvent("e2", include) };
             var result = await Stream.WriteAsync(new Stream(partition), events);
 
             entity = new TestEntity("INV-0001");
             include = Include.Insert(entity);
 
-            events = new[] {CreateEvent("e3", include)};
+            events = new[] { CreateEvent("e3", include) };
             Assert.ThrowsAsync<IncludedOperationConflictException>(
-                async ()=> await Stream.WriteAsync(result.Stream, events));
+                async () => await Stream.WriteAsync(result.Stream, events));
         }
 
         [Test]
@@ -74,13 +71,13 @@ namespace Streamstone.Scenarios
             var entity = new TestEntity("INV-0001");
             var include = Include.Insert(entity);
 
-            EventData[] events = {CreateEvent("e1"), CreateEvent("e2", include)};
+            EventData[] events = { CreateEvent("e1"), CreateEvent("e2", include) };
             var result = await Stream.WriteAsync(new Stream(partition), events);
 
             entity = new TestEntity("INV-0001");
             include = Include.Insert(entity);
 
-            events = new[] {CreateEvent("e1", include)};
+            events = new[] { CreateEvent("e1", include) };
             Assert.ThrowsAsync<DuplicateEventException>(
                 async () => await Stream.WriteAsync(result.Stream, events));
         }
@@ -91,7 +88,7 @@ namespace Streamstone.Scenarios
             var entity = new TestEntity("INV-0001");
             var include = Include.Insert(entity);
 
-            EventData[] events = {CreateEvent("e1"), CreateEvent("e2", include)};
+            EventData[] events = { CreateEvent("e1"), CreateEvent("e2", include) };
             var result = await Stream.WriteAsync(new Stream(partition), events);
 
             partition.UpdateStreamEntity();
@@ -99,7 +96,7 @@ namespace Streamstone.Scenarios
             entity = new TestEntity("INV-0001");
             include = Include.Insert(entity);
 
-            events = new[] {CreateEvent("e3", include)};
+            events = new[] { CreateEvent("e3", include) };
             Assert.ThrowsAsync<ConcurrencyConflictException>(
                 async () => await Stream.WriteAsync(result.Stream, events));
         }
@@ -140,52 +137,51 @@ namespace Streamstone.Scenarios
                 .ToArray();
 
             var @event = new EventData(
-                EventId.From("offsize"), 
+                EventId.From("offsize"),
                 EventIncludes.From(includes)
             );
 
             Assert.ThrowsAsync<InvalidOperationException>(
-                async ()=> await Stream.WriteAsync(stream, @event));
+                async () => await Stream.WriteAsync(stream, @event));
         }
 
         TestEntity RetrieveTestEntity(string rowKey)
         {
-            var filter = TableQuery.CombineFilters(
-                TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, partition.PartitionKey),
-                TableOperators.And,
-                TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, rowKey));
-
-            return table.ExecuteQuery<TestEntity>(filter)
+            return table.Query<TestEntity>(e => e.PartitionKey == partition.PartitionKey && e.RowKey == rowKey)
                         .SingleOrDefault();
         }
 
         static EventData CreateEvent(string id, params Include[] includes)
         {
-            var properties = new Dictionary<string, EntityProperty>
+            var properties = new Dictionary<string, object>
             {
-                {"Id",   new EntityProperty(id)},
-                {"Type", new EntityProperty("StreamChanged")},
-                {"Data", new EntityProperty("{}")}
+                {"Id",   id},
+                {"Type", "StreamChanged"},
+                {"Data", "{}"}
             };
 
             return new EventData(
-                            EventId.From(id), 
-                            EventProperties.From(properties), 
+                            EventId.From(id),
+                            EventProperties.From(properties),
                             EventIncludes.From(includes));
         }
 
-        class TestEntity : TableEntity
+        class TestEntity : ITableEntity
         {
             public TestEntity()
-            {}
+            { }
 
             public TestEntity(string rowKey)
             {
                 RowKey = rowKey;
                 Data = DateTime.UtcNow.ToString();
             }
+            public string PartitionKey { get; set; }
+            public string RowKey { get; set; }
+            public DateTimeOffset? Timestamp { get; set; }
+            public ETag ETag { get; set; }
 
-            public string Data { get; set; }            
+            public string Data { get; set; }
         }
     }
 }

@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
-
-using NUnit.Framework;
+using Azure;
+using Azure.Data.Tables;
 using ExpectedObjects;
-
-using Microsoft.Azure.Cosmos.Table;
+using NUnit.Framework;
 
 namespace Streamstone.Scenarios
 {
@@ -14,7 +13,7 @@ namespace Streamstone.Scenarios
     public class Writing_to_stream
     {
         Partition partition;
-        CloudTable table;
+        TableClient table;
 
         [SetUp]
         public void SetUp()
@@ -24,12 +23,12 @@ namespace Streamstone.Scenarios
         }
 
         [Test]
-        [TestCase(true,  false, false, Description = "Only Header changed. Concurrent update of stream properties")]
-        [TestCase(true,  true,  false, Description = "Header + Event with the same version exists. Concurrent append")]
-        [TestCase(true,  false, true,  Description = "Header + ID exists. Concurrent append")]
-        [TestCase(true,  true,  true,  Description = "Header + Event + ID. Concurrent append")]
-        [TestCase(false, true,  false, Description = "Only Event with the same version exists. Degenerate case (corruption or manual edit)")]
-        [TestCase(false, true,  true,  Description = "Event + ID. Degenerate case (corruption or manual edit)")]
+        [TestCase(true, false, false, Description = "Only Header changed. Concurrent update of stream properties")]
+        [TestCase(true, true, false, Description = "Header + Event with the same version exists. Concurrent append")]
+        [TestCase(true, false, true, Description = "Header + ID exists. Concurrent append")]
+        [TestCase(true, true, true, Description = "Header + Event + ID. Concurrent append")]
+        [TestCase(false, true, false, Description = "Only Event with the same version exists. Degenerate case (corruption or manual edit)")]
+        [TestCase(false, true, true, Description = "Event + ID. Degenerate case (corruption or manual edit)")]
         public async Task When_write_conflict(bool streamHeaderChanged, bool eventEntityExists, bool idEntityExists)
         {
             var stream = await Stream.ProvisionAsync(partition);
@@ -48,8 +47,8 @@ namespace Streamstone.Scenarios
             partition.CaptureContents(contents =>
             {
                 Assert.ThrowsAsync<ConcurrencyConflictException>(
-                    async ()=> await Stream.WriteAsync(stream, @event));
-                
+                    async () => await Stream.WriteAsync(stream, @event));
+
                 contents.AssertNothingChanged();
             });
         }
@@ -81,7 +80,7 @@ namespace Streamstone.Scenarios
                 Assert.ThrowsAsync<DuplicateEventException>(
                     async () => await Stream.WriteAsync(stream, CreateEvent("e3"), duplicate));
 
-                contents.AssertNothingChanged();  
+                contents.AssertNothingChanged();
             });
         }
 
@@ -90,7 +89,7 @@ namespace Streamstone.Scenarios
         {
             var stream = new Stream(partition);
 
-            EventData[] events = {CreateEvent("e1"), CreateEvent("e2")};
+            EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
             var result = await Stream.WriteAsync(stream, events);
 
             AssertModifiedStream(stream, result, version: 2);
@@ -104,7 +103,7 @@ namespace Streamstone.Scenarios
 
             var eventEntities = partition.RetrieveEventEntities();
             Assert.That(eventEntities.Length, Is.EqualTo(2));
-            
+
             AssertEventEntity(1, eventEntities[0]);
             AssertEventEntity(2, eventEntities[1]);
 
@@ -114,14 +113,14 @@ namespace Streamstone.Scenarios
             AssertEventIdEntity("e1", 1, eventIdEntities[0]);
             AssertEventIdEntity("e2", 2, eventIdEntities[1]);
 
-            Assert.That(partition.RetrieveAll().Count, 
+            Assert.That(partition.RetrieveAll().Count,
                 Is.EqualTo(eventEntities.Length + eventIdEntities.Length + 1));
         }
 
         [Test]
         public async Task When_writing_to_nonexisting_stream()
         {
-            EventData[] events = {CreateEvent("e1"), CreateEvent("e2")};
+            EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
             var result = await Stream.WriteAsync(new Stream(partition), events);
 
             AssertNewStream(result, version: 2);
@@ -154,7 +153,7 @@ namespace Streamstone.Scenarios
         {
             var stream = new Stream(partition);
 
-            EventData[] events = {CreateEvent(), CreateEvent()};
+            EventData[] events = { CreateEvent(), CreateEvent() };
             var result = await Stream.WriteAsync(stream, events);
 
             AssertModifiedStream(stream, result, version: 2);
@@ -190,12 +189,12 @@ namespace Streamstone.Scenarios
 
             var stream = new Stream(partition, StreamProperties.From(properties));
 
-            EventData[] events = {CreateEvent("e1"), CreateEvent("e2")};
+            EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
             var result = await Stream.WriteAsync(stream, events);
 
             AssertNewStream(result, 2, properties);
             AssertStreamEntity(2, properties);
-            
+
             var storedEvents = result.Events;
             Assert.That(storedEvents.Length, Is.EqualTo(2));
 
@@ -267,7 +266,7 @@ namespace Streamstone.Scenarios
 
             expectedVersion = 0;
 
-            Assert.ThrowsAsync<ConcurrencyConflictException>(async ()=> await 
+            Assert.ThrowsAsync<ConcurrencyConflictException>(async () => await
                 Stream.WriteAsync(partition, expectedVersion, CreateEvent("e1"), CreateEvent("e2")));
         }
 
@@ -290,7 +289,7 @@ namespace Streamstone.Scenarios
             var restored = Stream.From(partition, stream.ETag, stream.Version, properties: null);
             result = await Stream.WriteAsync(restored, CreateEvent("e3"));
 
-            AssertNewStream(result, 3, new {});
+            AssertNewStream(result, 3, new { });
             AssertStreamEntity(3, properties);
         }
 
@@ -337,15 +336,15 @@ namespace Streamstone.Scenarios
             var actualStreamEntity = partition.RetrieveStreamEntity();
 
             Assert.That(actualStream.ETag, Is.Not.EqualTo(previous.ETag));
-            
+
             var expectedStream = CreateStream(version, actualStreamEntity.ETag);
             expectedStream.ToExpectedObject().ShouldEqual(actualStream);
         }
 
-        Stream CreateStream(int version, string etag, object properties = null)
+        Stream CreateStream(int version, ETag etag, object properties = null)
         {
-            var props = properties != null  
-                ? StreamProperties.From(properties) 
+            var props = properties != null
+                ? StreamProperties.From(properties)
                 : StreamProperties.None;
 
             return new Stream(partition, etag, version, props);
@@ -378,12 +377,12 @@ namespace Streamstone.Scenarios
             var expected = new
             {
                 RowKey = version.FormatEventRowKey(),
-                Properties = EventProperties.From(new Dictionary<string, EntityProperty>
+                Properties = EventProperties.From(new Dictionary<string, object>
                 {
-                    {"Type", new EntityProperty("StreamChanged")},
-                    {"Data", new EntityProperty("{}")},
+                    {"Type", "StreamChanged"},
+                    {"Data", "{}"}
                 }),
-                Version = version,
+                Version = version
             };
 
             expected.ToExpectedObject().ShouldMatch(actual);
@@ -402,20 +401,25 @@ namespace Streamstone.Scenarios
 
         static EventData CreateEvent(string id = null)
         {
-            var properties = new Dictionary<string, EntityProperty>
+            var properties = new Dictionary<string, object>
             {
-                {"Type", new EntityProperty("StreamChanged")},
-                {"Data", new EntityProperty("{}")}
+                {"Type", "StreamChanged"},
+                {"Data", "{}"}
             };
 
-            var eventId = id != null 
-                ? EventId.From(id) 
+            var eventId = id != null
+                ? EventId.From(id)
                 : EventId.None;
 
             return new EventData(eventId, EventProperties.From(properties));
         }
 
-        class TestEntity : TableEntity
-        {}
+        class TestEntity : ITableEntity
+        {
+            public string PartitionKey { get; set; }
+            public string RowKey { get; set; }
+            public DateTimeOffset? Timestamp { get; set; }
+            public ETag ETag { get; set; }
+        }
     }
 }
