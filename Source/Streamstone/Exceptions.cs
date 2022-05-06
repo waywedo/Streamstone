@@ -89,25 +89,12 @@ namespace Streamstone
 
         internal static IncludedOperationConflictException Create(Partition partition, EntityOperation include)
         {
-            var dump = Dump(include.Entity);
-
             var message = string.Format(
-                "Included '{3}' operation had conflicts in partition '{1}' which resides in '{0}' table located at {2}\n" +
-                "Dump of conflicting [{5}] contents follows: \n\t{4}",
+                "Included '{3}' operation had conflicts in partition '{1}' which resides in '{0}' table located at {2}",
                 partition.Table, partition, partition.Table.AccountName,
-                include.GetType().Name, dump, include.Entity.GetType());
+                include.GetType().Name);
 
             return new IncludedOperationConflictException(partition, include.Entity, message);
-        }
-
-        static string Dump(ITableEntity entity)
-        {
-            var result = new StringBuilder();
-
-            foreach (var property in entity.WriteEntity(new OperationContext()))
-                result.Append($"\"{property.Key}\" : {property.Value}");
-
-            return result.ToString();
         }
     }
 

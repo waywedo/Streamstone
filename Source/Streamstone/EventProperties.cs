@@ -18,28 +18,23 @@ namespace Streamstone
         EventProperties()
         {}
 
-        EventProperties(IDictionary<string, EntityProperty> properties)
+        EventProperties(IDictionary<string, object> properties)
             : base(properties)
         {}
 
-        internal static EventProperties ReadEntity(IDictionary<string, EntityProperty> properties)
+        public override void CopyFrom(TableEntity entity)
+        {
+            Clear();
+            foreach (var property in Build(entity))
+            {
+                Add(property.Key, property.Value);
+            }
+        }
+
+        internal static EventProperties ReadEntity(IDictionary<string, object> properties)
         {
             Requires.NotNull(properties, nameof(properties));
             return Build(properties);
-        }
-
-        /// <summary>
-        /// Creates new instance of <see cref="EventProperties"/> class using given dictionary of entity properties
-        /// </summary>
-        /// <param name="properties">The properties.</param>
-        /// <returns>New instance of <see cref="EventProperties"/> class</returns>
-        /// <exception cref="ArgumentNullException">
-        ///     If <paramref name="properties"/> is <c>null</c>
-        /// </exception>
-        public static EventProperties From(IDictionary<string, EntityProperty> properties)
-        {
-            Requires.NotNull(properties, nameof(properties));
-            return Build(Clone(properties));
         }
 
         /// <summary>
@@ -60,7 +55,21 @@ namespace Streamstone
             return Build(ToDictionary(obj));
         }
 
-        static EventProperties Build(IEnumerable<KeyValuePair<string, EntityProperty>> properties)
+        /// <summary>
+        /// Creates new instance of <see cref="EventProperties"/> class using public properties of a given table entity.
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <returns>New instance of <see cref="EventProperties"/> class</returns>
+        /// <exception cref="ArgumentNullException">
+        ///     If <paramref name="entity"/> is <c>null</c>
+        /// </exception>
+        public static EventProperties From(TableEntity entity)
+        {
+            Requires.NotNull(entity, nameof(entity));
+            return Build(entity);
+        }
+
+        static EventProperties Build(IEnumerable<KeyValuePair<string, object>> properties)
         {
             var filtered = properties
                 .Where(x => !IsReserved(x.Key))

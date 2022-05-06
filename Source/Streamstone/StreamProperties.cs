@@ -22,26 +22,20 @@ namespace Streamstone
             : base(properties)
         { }
 
+        public override void CopyFrom(TableEntity entity)
+        {
+            Clear();
+            foreach (var property in Build(entity))
+            {
+                Add(property.Key, property.Value);
+            }
+        }
 
         internal static StreamProperties ReadEntity(IDictionary<string, object> properties)
         {
             Requires.NotNull(properties, nameof(properties));
             return Build(properties);
         }
-
-        /// <summary>
-        /// Creates new instance of <see cref="StreamProperties"/> class using given dictionary of entity properties
-        /// </summary>
-        /// <param name="properties">The properties.</param>
-        /// <returns>New instance of <see cref="StreamProperties"/> class</returns>
-        /// <exception cref="ArgumentNullException">
-        ///     If <paramref name="properties"/> is <c>null</c>
-        /// </exception>
-        //public static StreamProperties From(IDictionary<string, object> properties)
-        //{
-        //    Requires.NotNull(properties, nameof(properties));
-        //    return Build(Clone(properties));
-        //}
 
         /// <summary>
         /// Creates new instance of <see cref="StreamProperties"/> class using public properties of a given object.

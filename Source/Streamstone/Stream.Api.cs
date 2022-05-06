@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using Azure.Data.Tables;
 
@@ -381,24 +382,34 @@ namespace Streamstone
             {
                 var t = new T();
 
-                if (t is ITableEntity entity)
-                {
-                    entity.ReadEntity(e.Properties, new OperationContext());
-                    entity.PartitionKey = e.PartitionKey;
-                    entity.RowKey = e.RowKey;
-                    entity.ETag = e.ETag;
-                    entity.Timestamp = e.Timestamp;
-                    return t;
-                }
+                CopyFromTableEntity(t, e);
 
-                TableEntity.ReadUserObject(t, e.Properties, new OperationContext());
                 return t;
             };
         }
 
         static EventProperties BuildEventProperties(TableEntity e)
         {
-            return EventProperties.ReadEntity(e.Properties);
+            return EventProperties.ReadEntity(e);
+        }
+
+        private static void CopyFromTableEntity(object target, TableEntity entity)
+        {
+            foreach (var property in target.GetType().GetTypeInfo().DeclaredProperties)
+            {
+                if (property.PropertyType.IsAssignableTo(typeof(PropertyMap)))
+                {
+                    var propertyMap = (PropertyMap)property.GetValue(target);
+                    propertyMap.CopyFrom(entity);
+                }
+
+                if (!entity.TryGetValue(property.Name, out var value))
+                {
+                    continue;
+                }
+
+                property.SetValue(target, value);
+            }
         }
     }
 }

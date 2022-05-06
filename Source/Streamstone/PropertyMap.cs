@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Azure.Data.Tables;
 
 namespace Streamstone
 {
@@ -25,5 +26,7 @@ namespace Streamstone
             return obj.GetType().GetTypeInfo().DeclaredProperties
                 .ToDictionary(p => p.Name, p => p.GetValue(obj, NoArgs));
         }
+
+        public abstract void CopyFrom(TableEntity entity);
     }
 }
