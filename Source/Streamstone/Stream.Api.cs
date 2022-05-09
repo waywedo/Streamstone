@@ -398,20 +398,20 @@ namespace Streamstone
         private static void CopyFromTableEntity(object target, TableEntity entity)
         {
             foreach (var property in target.GetType().GetTypeInfo().DeclaredProperties
-                .Where(p => p.Name == "Properties" || p.GetCustomAttribute<IgnoreDataMemberAttribute>() == null))
+                .Where(p => p.PropertyType.IsAssignableTo(typeof(PropertyMap)) || p.GetCustomAttribute<IgnoreDataMemberAttribute>() == null))
             {
                 if (property.PropertyType.IsAssignableTo(typeof(PropertyMap)))
                 {
                     var propertyMap = (PropertyMap)property.GetValue(target);
                     propertyMap.CopyFrom(entity);
-                }
-
-                if (!entity.TryGetValue(property.Name, out var value))
-                {
+                    property.SetValue(target, propertyMap);
                     continue;
                 }
 
-                property.SetValue(target, value);
+                if (entity.TryGetValue(property.Name, out var value))
+                {
+                    property.SetValue(target, value);
+                }
             }
         }
     }

@@ -134,7 +134,7 @@ namespace Streamstone.Scenarios
         }
 
         [Test]
-        public async Task When_requested_result_is_DynamicTableEntity()
+        public async Task When_requested_result_is_dynamic_TableEntity()
         {
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
             await Stream.WriteAsync(new Stream(partition), events);
@@ -153,7 +153,7 @@ namespace Streamstone.Scenarios
         }
 
         [Test]
-        public async Task When_requested_result_is_custom_TableEntity()
+        public async Task When_requested_result_is_custom_ITableEntity()
         {
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
             await Stream.WriteAsync(new Stream(partition), events);

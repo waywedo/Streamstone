@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization;
 using Azure.Data.Tables;
 
 namespace Streamstone
@@ -38,15 +40,56 @@ namespace Streamstone
             return this;
         }
 
+        protected TableEntity TableEntity()
+        {
+            var entity = new TableEntity(Entity.PartitionKey, Entity.RowKey)
+            {
+                ETag = Entity.ETag
+            };
+
+            foreach (var property in Entity.GetType().GetTypeInfo().DeclaredProperties
+                .Where(p => !IsReserved(p.Name)
+                    && (p.PropertyType.IsAssignableTo(typeof(PropertyMap))
+                        || p.GetCustomAttribute<IgnoreDataMemberAttribute>() == null)))
+            {
+                if (property.PropertyType.IsAssignableTo(typeof(PropertyMap)))
+                {
+                    foreach (var mappedProperty in (PropertyMap)property.GetValue(Entity))
+                    {
+                        entity.Add(mappedProperty.Key, mappedProperty.Value);
+                    }
+                    continue;
+                }
+
+                entity.Add(property.Name, property.GetValue(Entity));
+            }
+
+            return entity;
+        }
+
+        static bool IsReserved(string propertyName)
+        {
+            switch (propertyName)
+            {
+                case "PartitionKey":
+                case "RowKey":
+                case "ETag":
+                case "Timestamp":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         public class Insert : EntityOperation
         {
             public Insert(ITableEntity entity)
                 : base(entity)
-            {}
+            { }
 
             protected override TableTransactionAction AsTableTransactionAction()
             {
-                return new TableTransactionAction(TableTransactionActionType.Add, Entity);
+                return new TableTransactionAction(TableTransactionActionType.Add, TableEntity());
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -74,11 +117,11 @@ namespace Streamstone
         {
             public Replace(ITableEntity entity)
                 : base(entity)
-            {}
+            { }
 
             protected override TableTransactionAction AsTableTransactionAction()
             {
-                return new TableTransactionAction(TableTransactionActionType.UpdateReplace, Entity);
+                return new TableTransactionAction(TableTransactionActionType.UpdateReplace, TableEntity());
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -106,7 +149,7 @@ namespace Streamstone
         {
             public Delete(ITableEntity entity)
                 : base(entity)
-            {}
+            { }
 
             protected override TableTransactionAction AsTableTransactionAction()
             {
@@ -138,11 +181,11 @@ namespace Streamstone
         {
             public InsertOrMerge(ITableEntity entity)
                 : base(entity)
-            {}
+            { }
 
             protected override TableTransactionAction AsTableTransactionAction()
             {
-                return new TableTransactionAction(TableTransactionActionType.UpsertMerge, Entity);
+                return new TableTransactionAction(TableTransactionActionType.UpsertMerge, TableEntity());
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -170,11 +213,11 @@ namespace Streamstone
         {
             public InsertOrReplace(ITableEntity entity)
                 : base(entity)
-            {}
+            { }
 
             protected override TableTransactionAction AsTableTransactionAction()
             {
-                return new TableTransactionAction(TableTransactionActionType.UpsertReplace, Entity);
+                return new TableTransactionAction(TableTransactionActionType.UpsertReplace, TableEntity());
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -202,11 +245,11 @@ namespace Streamstone
         {
             public UpdateMerge(ITableEntity entity)
                 : base(entity)
-            {}
+            { }
 
             protected override TableTransactionAction AsTableTransactionAction()
             {
-                return new TableTransactionAction(TableTransactionActionType.UpdateMerge, Entity);
+                return new TableTransactionAction(TableTransactionActionType.UpdateMerge, TableEntity());
             }
 
             public override EntityOperation Merge(EntityOperation other) =>
@@ -217,7 +260,7 @@ namespace Streamstone
         {
             internal Null()
                 : base(null)
-            {}
+            { }
 
             protected override TableTransactionAction AsTableTransactionAction()
             {
