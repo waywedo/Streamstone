@@ -87,7 +87,7 @@ namespace Streamstone
 
         public static StreamEntity RetrieveStreamEntity(this Partition partition)
         {
-            return partition.Table.GetEntity<StreamEntity>(partition.PartitionKey, Api.StreamRowKey);
+            return StreamEntity.From(partition.Table.GetEntity<TableEntity>(partition.PartitionKey, Api.StreamRowKey));
         }
 
         public static void InsertEventEntities(this Partition partition, params string[] ids)
