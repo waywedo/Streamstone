@@ -58,7 +58,7 @@ namespace Streamstone
 
                 internal void Handle(RequestFailedException exception)
                 {
-                    if (exception.HasErrorCode(ErrorCode.EntityAlreadyExists))
+                    if (exception.HasErrorCode(TableErrorCode.EntityAlreadyExists))
                         throw ConcurrencyConflictException.StreamChangedOrExists(partition);
 
                     ExceptionDispatchInfo.Capture(exception).Throw();
@@ -240,49 +240,25 @@ namespace Streamstone
 
                 internal void Handle(TableTransactionFailedException exception)
                 {
-                    if (exception.HasErrorCode(ErrorCode.UpdateConditionNotSatisfied))
+                    if (exception.HasErrorCode(TableErrorCode.UpdateConditionNotSatisfied))
                         throw ConcurrencyConflictException.StreamChangedOrExists(partition);
 
-                    if (!exception.HasErrorCode(ErrorCode.EntityAlreadyExists))
+                    if (!exception.HasErrorCode(TableErrorCode.EntityAlreadyExists))
                         ExceptionDispatchInfo.Capture(exception).Throw();
 
-                    // TODO : We shouldn't need to parse this exception any more
-                    // Use TableTransactionFailedException.FailedTransactionActionIndex instead
-                    var position = ParseConflictingEntityPosition(exception);
-
-                    Debug.Assert(position >= 0 && position < operations.Count);
-                    var conflicting = operations[position].Entity;
+                    var conflicting = operations[exception.FailedTransactionActionIndex.Value].Entity;
 
                     if (conflicting == stream)
                         throw ConcurrencyConflictException.StreamChangedOrExists(partition);
 
-                    var id = conflicting as EventIdEntity;
-                    if (id != null)
+                    if (conflicting is EventIdEntity id)
                         throw new DuplicateEventException(partition, id.Event.Id);
 
-                    var @event = conflicting as EventEntity;
-                    if (@event != null)
+                    if (conflicting is EventEntity @event)
                         throw ConcurrencyConflictException.EventVersionExists(partition, @event.Version);
 
                     var include = operations.Single(x => x.Entity == conflicting);
                     throw IncludedOperationConflictException.Create(partition, include);
-                }
-
-                static int ParseConflictingEntityPosition(RequestFailedException error)
-                {
-                    var lines = error.Message.Trim().Split('\n');
-                    if (lines.Length != 3)
-                        throw UnexpectedStorageResponseException.ConflictExceptionMessageShouldHaveExactlyThreeLines(error);
-
-                    var semicolonIndex = lines[0].IndexOf(":", StringComparison.Ordinal);
-                    if (semicolonIndex == -1)
-                        throw UnexpectedStorageResponseException.ConflictExceptionMessageShouldHaveSemicolonOnFirstLine(error);
-
-                    int position;
-                    if (!int.TryParse(lines[0].Substring(0, semicolonIndex), out position))
-                        throw UnexpectedStorageResponseException.UnableToParseTextBeforeSemicolonToInteger(error);
-
-                    return position;
                 }
             }
         }
@@ -333,7 +309,7 @@ namespace Streamstone
 
                 internal void Handle(RequestFailedException exception)
                 {
-                    if (exception.HasErrorCode(ErrorCode.UpdateConditionNotSatisfied))
+                    if (exception.HasErrorCode(TableErrorCode.UpdateConditionNotSatisfied))
                         throw ConcurrencyConflictException.StreamChanged(partition);
 
                     ExceptionDispatchInfo.Capture(exception).Throw();

@@ -12,7 +12,7 @@ namespace Streamstone
     /// <remarks>
     /// https://docs.microsoft.com/en-us/rest/api/storageservices/Table-Service-Error-Codes
     /// </remarks>
-    public enum ErrorCode
+    public enum TableErrorCode
     {
         DuplicatePropertiesSpecified,
         EntityNotFound,
@@ -42,7 +42,7 @@ namespace Streamstone
 
     public static class ErrorCodeExtensions
     {
-        public static bool HasErrorCode(this RequestFailedException ex, ErrorCode errorCode)
+        public static bool HasErrorCode(this RequestFailedException ex, TableErrorCode errorCode)
         {
             return ex.ErrorCode == errorCode.ToString();
         }

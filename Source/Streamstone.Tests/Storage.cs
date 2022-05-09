@@ -81,7 +81,8 @@ namespace Streamstone
             var entity = RetrieveStreamEntity(partition);
             entity.Version = version;
 
-            partition.Table.UpdateEntity(entity, entity.ETag, TableUpdateMode.Replace);
+            var response = partition.Table.UpdateEntity(entity, entity.ETag, TableUpdateMode.Replace);
+            entity.ETag = response.Headers.ETag.Value;
             return entity;
         }
 

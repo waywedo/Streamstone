@@ -130,37 +130,5 @@ namespace Streamstone
             return new ConcurrencyConflictException(partition, "Stream header has been changed or already exists in a storage");
         }
     }
-
-    /// <summary>
-    /// This exception is thrown when Streamstone receives unexpected response from underlying WATS layer.
-    /// </summary>
-    public sealed class UnexpectedStorageResponseException : StreamstoneException
-    {
-        /// <summary>
-        /// The error information
-        /// </summary>
-        public readonly RequestFailedException Error;
-
-        UnexpectedStorageResponseException(RequestFailedException error, string details)
-            : base("Unexpected Table Storage response. Details: " + details)
-        {
-            Error = error;
-        }
-
-        internal static Exception ConflictExceptionMessageShouldHaveExactlyThreeLines(RequestFailedException error)
-        {
-            return new UnexpectedStorageResponseException(error, "Conflict exception message should have exactly 3 lines");
-        }
-
-        internal static Exception ConflictExceptionMessageShouldHaveSemicolonOnFirstLine(RequestFailedException error)
-        {
-            return new UnexpectedStorageResponseException(error, "Conflict exception message should have semicolon on first line");
-        }
-
-        internal static Exception UnableToParseTextBeforeSemicolonToInteger(RequestFailedException error)
-        {
-            return new UnexpectedStorageResponseException(error, "Unable to parse text on first line before semicolon as integer");
-        }
-    }
 }
 #pragma warning restore RCS1194 // Implement exception constructors.

@@ -89,7 +89,8 @@ namespace Streamstone
 
             protected override TableTransactionAction AsTableTransactionAction()
             {
-                return new TableTransactionAction(TableTransactionActionType.Add, TableEntity());
+                var entity = TableEntity();
+                return new TableTransactionAction(TableTransactionActionType.Add, entity, entity.ETag);
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -121,7 +122,8 @@ namespace Streamstone
 
             protected override TableTransactionAction AsTableTransactionAction()
             {
-                return new TableTransactionAction(TableTransactionActionType.UpdateReplace, TableEntity());
+                var entity = TableEntity();
+                return new TableTransactionAction(TableTransactionActionType.UpdateReplace, entity, entity.ETag);
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -153,7 +155,7 @@ namespace Streamstone
 
             protected override TableTransactionAction AsTableTransactionAction()
             {
-                return new TableTransactionAction(TableTransactionActionType.Delete, Entity);
+                return new TableTransactionAction(TableTransactionActionType.Delete, Entity, Entity.ETag);
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -185,7 +187,8 @@ namespace Streamstone
 
             protected override TableTransactionAction AsTableTransactionAction()
             {
-                return new TableTransactionAction(TableTransactionActionType.UpsertMerge, TableEntity());
+                var entity = TableEntity();
+                return new TableTransactionAction(TableTransactionActionType.UpsertMerge, entity, entity.ETag);
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -217,7 +220,8 @@ namespace Streamstone
 
             protected override TableTransactionAction AsTableTransactionAction()
             {
-                return new TableTransactionAction(TableTransactionActionType.UpsertReplace, TableEntity());
+                var entity = TableEntity();
+                return new TableTransactionAction(TableTransactionActionType.UpsertReplace, entity, entity.ETag);
             }
 
             public override EntityOperation Merge(EntityOperation other)
@@ -249,7 +253,8 @@ namespace Streamstone
 
             protected override TableTransactionAction AsTableTransactionAction()
             {
-                return new TableTransactionAction(TableTransactionActionType.UpdateMerge, TableEntity());
+                var entity = TableEntity();
+                return new TableTransactionAction(TableTransactionActionType.UpdateMerge, entity, entity.ETag);
             }
 
             public override EntityOperation Merge(EntityOperation other) =>
