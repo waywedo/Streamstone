@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Serialization;
 using Azure;
 using Azure.Data.Tables;
 
@@ -27,6 +28,8 @@ namespace Streamstone
         public ETag ETag { get; set; }
 
         public int Version { get; set; }
+
+        [IgnoreDataMember]
         public EventProperties Properties { get; set; }
     }
 }

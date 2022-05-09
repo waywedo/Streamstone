@@ -30,6 +30,8 @@ namespace Streamstone
         public ETag ETag { get; set; }
 
         public int Version { get; set; }
+
+        [IgnoreDataMember]
         public StreamProperties Properties { get; set; }
 
         [IgnoreDataMember]

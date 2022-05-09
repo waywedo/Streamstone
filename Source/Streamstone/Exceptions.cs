@@ -147,11 +147,6 @@ namespace Streamstone
             Error = error;
         }
 
-        internal static Exception ErrorCodeShouldBeEntityAlreadyExists(RequestFailedException error)
-        {
-            return new UnexpectedStorageResponseException(error, "Erorr code should be indicated as 'EntityAlreadyExists' but was: " + error.ErrorCode);
-        }
-
         internal static Exception ConflictExceptionMessageShouldHaveExactlyThreeLines(RequestFailedException error)
         {
             return new UnexpectedStorageResponseException(error, "Conflict exception message should have exactly 3 lines");

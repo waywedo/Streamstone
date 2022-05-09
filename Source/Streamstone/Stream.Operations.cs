@@ -33,7 +33,7 @@ namespace Streamstone
                 {
                     await table.SubmitTransactionAsync(new[] { insert.Prepare() }).ConfigureAwait(false);
                 }
-                catch (RequestFailedException e)
+                catch (TableTransactionFailedException e)
                 {
                     insert.Handle(e);
                 }
@@ -57,9 +57,9 @@ namespace Streamstone
                     return new TableTransactionAction(TableTransactionActionType.Add, entity);
                 }
 
-                internal void Handle(RequestFailedException exception)
+                internal void Handle(TableTransactionFailedException exception)
                 {
-                    if (exception.Status == (int)HttpStatusCode.Conflict)
+                    if (exception.HasErrorCode(ErrorCode.EntityAlreadyExists))
                         throw ConcurrencyConflictException.StreamChangedOrExists(partition);
 
                     ExceptionDispatchInfo.Capture(exception).Throw();
@@ -98,7 +98,7 @@ namespace Streamstone
                     {
                         await table.SubmitTransactionAsync(batch.Prepare()).ConfigureAwait(false);
                     }
-                    catch (RequestFailedException e)
+                    catch (TableTransactionFailedException e)
                     {
                         batch.Handle(e);
                     }
@@ -235,17 +235,16 @@ namespace Streamstone
                     return From(partition, stream);
                 }
 
-                internal void Handle(RequestFailedException exception)
+                internal void Handle(TableTransactionFailedException exception)
                 {
-                    if (exception.Status == (int)HttpStatusCode.PreconditionFailed)
+                    if (exception.HasErrorCode(ErrorCode.UpdateConditionNotSatisfied))
                         throw ConcurrencyConflictException.StreamChangedOrExists(partition);
 
-                    if (exception.Status != (int)HttpStatusCode.Conflict)
+                    if (!exception.HasErrorCode(ErrorCode.EntityAlreadyExists))
                         ExceptionDispatchInfo.Capture(exception).Throw();
 
-                    if (exception.ErrorCode != "EntityAlreadyExists")
-                        throw UnexpectedStorageResponseException.ErrorCodeShouldBeEntityAlreadyExists(exception);
-
+                    // TODO : We shouldn't need to parse this exception any more
+                    // Use TableTransactionFailedException.FailedTransactionActionIndex instead
                     var position = ParseConflictingEntityPosition(exception);
 
                     Debug.Assert(position >= 0 && position < operations.Count);
@@ -306,7 +305,7 @@ namespace Streamstone
                 {
                     await table.SubmitTransactionAsync(new[] { replace.Prepare() }).ConfigureAwait(false);
                 }
-                catch (RequestFailedException e)
+                catch (TableTransactionFailedException e)
                 {
                     replace.Handle(e);
                 }
@@ -330,9 +329,9 @@ namespace Streamstone
                     return new TableTransactionAction(TableTransactionActionType.UpdateReplace, entity);
                 }
 
-                internal void Handle(RequestFailedException exception)
+                internal void Handle(TableTransactionFailedException exception)
                 {
-                    if (exception.Status == (int)HttpStatusCode.PreconditionFailed)
+                    if (exception.HasErrorCode(ErrorCode.UpdateConditionNotSatisfied))
                         throw ConcurrencyConflictException.StreamChanged(partition);
 
                     ExceptionDispatchInfo.Capture(exception).Throw();

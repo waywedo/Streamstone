@@ -25,7 +25,7 @@ namespace Streamstone.Scenarios
         {
             return typeof(StreamEntity)
                     .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                    .Where(p => !p.GetCustomAttributes<IgnoreDataMemberAttribute>(true).Any() && p.Name != "Properties")
+                    .Where(p => !p.GetCustomAttributes<IgnoreDataMemberAttribute>(true).Any())
                     .Select(p => p.Name);
         }
     }
