@@ -1,5 +1,6 @@
 ﻿using Azure;
 using Azure.Data.Tables;
+using Azure.Data.Tables.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -58,7 +59,7 @@ namespace Streamstone
 
                 internal void Handle(RequestFailedException exception)
                 {
-                    if (exception.HasErrorCode(TableErrorCode.EntityAlreadyExists))
+                    if (exception.ErrorCode == TableErrorCode.EntityAlreadyExists)
                         throw ConcurrencyConflictException.StreamChangedOrExists(partition);
 
                     ExceptionDispatchInfo.Capture(exception).Throw();
@@ -240,10 +241,10 @@ namespace Streamstone
 
                 internal void Handle(TableTransactionFailedException exception)
                 {
-                    if (exception.HasErrorCode(TableErrorCode.UpdateConditionNotSatisfied))
+                    if (exception.ErrorCode == TableErrorCode.UpdateConditionNotSatisfied)
                         throw ConcurrencyConflictException.StreamChangedOrExists(partition);
 
-                    if (!exception.HasErrorCode(TableErrorCode.EntityAlreadyExists))
+                    if (exception.ErrorCode != TableErrorCode.EntityAlreadyExists)
                         ExceptionDispatchInfo.Capture(exception).Throw();
 
                     var conflicting = operations[exception.FailedTransactionActionIndex.Value].Entity;
@@ -309,7 +310,7 @@ namespace Streamstone
 
                 internal void Handle(RequestFailedException exception)
                 {
-                    if (exception.HasErrorCode(TableErrorCode.UpdateConditionNotSatisfied))
+                    if (exception.ErrorCode == TableErrorCode.UpdateConditionNotSatisfied)
                         throw ConcurrencyConflictException.StreamChanged(partition);
 
                     ExceptionDispatchInfo.Capture(exception).Throw();
