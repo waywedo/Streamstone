@@ -31,14 +31,13 @@ namespace Streamstone
 
                 try
                 {
-                    await table.SubmitTransactionAsync(new[] { insert.Prepare() }).ConfigureAwait(false);
+                    return insert.Result(await insert.ExecuteAsync(table).ConfigureAwait(false));
                 }
-                catch (TableTransactionFailedException e)
+                catch (RequestFailedException e)
                 {
                     insert.Handle(e);
+                    return null;
                 }
-
-                return insert.Result();
             }
 
             class Insert
@@ -52,12 +51,12 @@ namespace Streamstone
                     partition = stream.Partition;
                 }
 
-                public TableTransactionAction Prepare()
+                internal async Task<Response> ExecuteAsync(TableClient table)
                 {
-                    return new TableTransactionAction(TableTransactionActionType.Add, entity);
+                    return await table.AddEntityAsync(entity);
                 }
 
-                internal void Handle(TableTransactionFailedException exception)
+                internal void Handle(RequestFailedException exception)
                 {
                     if (exception.HasErrorCode(ErrorCode.EntityAlreadyExists))
                         throw ConcurrencyConflictException.StreamChangedOrExists(partition);
@@ -65,7 +64,11 @@ namespace Streamstone
                     ExceptionDispatchInfo.Capture(exception).Throw();
                 }
 
-                internal Stream Result() => From(partition, entity);
+                internal Stream Result(Response response)
+                {
+                    entity.ETag = response.Headers.ETag.Value;
+                    return From(partition, entity);
+                }
             }
         }
 
@@ -303,14 +306,13 @@ namespace Streamstone
 
                 try
                 {
-                    await table.SubmitTransactionAsync(new[] { replace.Prepare() }).ConfigureAwait(false);
+                    return replace.Result(await replace.ExecuteAsync(table).ConfigureAwait(false));
                 }
-                catch (TableTransactionFailedException e)
+                catch (RequestFailedException e)
                 {
                     replace.Handle(e);
+                    return null;
                 }
-
-                return replace.Result();
             }
 
             class Replace
@@ -324,12 +326,12 @@ namespace Streamstone
                     partition = stream.Partition;
                 }
 
-                internal TableTransactionAction Prepare()
+                internal async Task<Response> ExecuteAsync(TableClient table)
                 {
-                    return new TableTransactionAction(TableTransactionActionType.UpdateReplace, entity);
+                    return await table.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace);
                 }
 
-                internal void Handle(TableTransactionFailedException exception)
+                internal void Handle(RequestFailedException exception)
                 {
                     if (exception.HasErrorCode(ErrorCode.UpdateConditionNotSatisfied))
                         throw ConcurrencyConflictException.StreamChanged(partition);
@@ -337,7 +339,11 @@ namespace Streamstone
                     ExceptionDispatchInfo.Capture(exception).Throw();
                 }
 
-                internal Stream Result() => From(partition, entity);
+                internal Stream Result(Response response)
+                {
+                    entity.ETag = response.Headers.ETag.Value;
+                    return From(partition, entity);
+                }
             }
         }
 

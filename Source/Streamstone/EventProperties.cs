@@ -98,6 +98,7 @@ namespace Streamstone
                 case "PartitionKey":
                 case "RowKey":
                 case "ETag":
+                case "odata.etag":
                 case "Timestamp":
                 case "Version":
                     return true;
