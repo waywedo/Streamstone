@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Azure.Data.Tables;
+using Streamstone.Utility;
 
 namespace Streamstone
 {
@@ -383,8 +384,7 @@ namespace Streamstone
             return e =>
             {
                 var t = new T();
-
-                CopyFromTableEntity(t, e);
+                e.CopyTo(t);
 
                 return t;
             };
@@ -393,26 +393,6 @@ namespace Streamstone
         static EventProperties BuildEventProperties(TableEntity e)
         {
             return EventProperties.ReadEntity(e);
-        }
-
-        private static void CopyFromTableEntity(object target, TableEntity entity)
-        {
-            foreach (var property in target.GetType().GetTypeInfo().DeclaredProperties
-                .Where(p => p.PropertyType.IsAssignableTo(typeof(PropertyMap)) || p.GetCustomAttribute<IgnoreDataMemberAttribute>() == null))
-            {
-                if (property.PropertyType.IsAssignableTo(typeof(PropertyMap)))
-                {
-                    var propertyMap = (PropertyMap)property.GetValue(target);
-                    propertyMap.CopyFrom(entity);
-                    property.SetValue(target, propertyMap);
-                    continue;
-                }
-
-                if (entity.TryGetValue(property.Name, out var value))
-                {
-                    property.SetValue(target, value);
-                }
-            }
         }
     }
 }

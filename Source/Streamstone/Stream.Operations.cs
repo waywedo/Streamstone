@@ -1,6 +1,7 @@
 ﻿using Azure;
 using Azure.Data.Tables;
 using Azure.Data.Tables.Models;
+using Streamstone.Utility;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -100,14 +101,12 @@ namespace Streamstone
 
                     try
                     {
-                        await table.SubmitTransactionAsync(batch.Prepare()).ConfigureAwait(false);
+                        current = batch.Result(await table.SubmitTransactionAsync(batch.Prepare()).ConfigureAwait(false));
                     }
                     catch (TableTransactionFailedException e)
                     {
                         batch.Handle(e);
                     }
-
-                    current = batch.Result();
                 }
 
                 return new StreamWriteResult(current, events.ToArray());
@@ -234,8 +233,11 @@ namespace Streamstone
                     return result;
                 }
 
-                internal Stream Result()
+                internal Stream Result(Response<IReadOnlyList<Response>> response)
                 {
+                    var streamResponse = response.GetResponseForEntity(stream.RowKey);
+                    stream.ETag = streamResponse.Headers.ETag.Value;
+
                     return From(partition, stream);
                 }
 

@@ -1,6 +1,9 @@
 ﻿using Azure;
 using Azure.Data.Tables;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
 namespace Streamstone
@@ -25,7 +28,8 @@ namespace Streamstone
                 var filter = $"{nameof(ITableEntity.PartitionKey)} eq '{partition.PartitionKey}'" +
                     $" and {WhereRowKeyPrefixFilter(prefix)}";
 
-                return await ExecuteQueryAsync<TEntity>(partition.Table, filter);
+                return (await ExecuteQueryAsync<TableEntity>(partition.Table, filter))
+                    .Select(e => e.AsEntity<TEntity>());
             }
 
             /// <summary>
@@ -38,12 +42,12 @@ namespace Streamstone
             public static async Task<IEnumerable<TEntity>> ExecuteQueryAsync<TEntity>(this TableClient table, string filter)
                 where TEntity : class, ITableEntity, new()
             {
-                var query = table.QueryAsync<TEntity>(filter);
+                var query = table.QueryAsync<TableEntity>(filter);
 
                 var result = new List<TEntity>();
                 await foreach (var entity in query)
                 {
-                    result.Add(entity);
+                    result.Add(entity.AsEntity<TEntity>());
                 }
 
                 return result;
@@ -55,6 +59,54 @@ namespace Streamstone
 
                 return $"{nameof(ITableEntity.RowKey)} ge '{range.Start}'" +
                     $" and {nameof(ITableEntity.RowKey)} lt '{range.End}'";
+            }
+        }
+
+        public static class TableEntityExtensions
+        {
+            public static T AsEntity<T>(this TableEntity entity)
+                where T : class, new()
+            {
+                if (typeof(T) == typeof(TableEntity))
+                    return entity as T;
+
+                var t = new T();
+                entity.CopyTo(t);
+
+                return t;
+            }
+
+            public static void CopyTo(this TableEntity entity, object target)
+            {
+                foreach (var property in target.GetType().GetTypeInfo().DeclaredProperties
+                    .Where(p => p.PropertyType.IsAssignableTo(typeof(PropertyMap))
+                        || p.GetCustomAttribute<IgnoreDataMemberAttribute>() == null))
+                {
+                    if (property.PropertyType.IsAssignableTo(typeof(PropertyMap)))
+                    {
+                        var propertyMap = (PropertyMap)property.GetValue(target);
+                        propertyMap.CopyFrom(entity);
+                        property.SetValue(target, propertyMap);
+                        continue;
+                    }
+
+                    if (entity.TryGetValue(property.Name, out var value))
+                    {
+                        property.SetValue(target, value);
+                    }
+                }
+            }
+        }
+
+        public static class ResponseExtensions
+        {
+            public static Response GetResponseForEntity(this Response<IReadOnlyList<Response>> response, string rowKey)
+            {
+                return response.Value.Single(r =>
+                {
+                    var location = r.Headers.Single(h => h.Name == "Location").Value;
+                    return location.Contains($"RowKey='{rowKey}'");
+                });
             }
         }
 
