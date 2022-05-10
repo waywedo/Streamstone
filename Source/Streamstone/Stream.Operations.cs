@@ -235,8 +235,12 @@ namespace Streamstone
 
                 internal Stream Result(Response<IReadOnlyList<Response>> response)
                 {
-                    var streamResponse = response.GetResponseForEntity(stream.RowKey);
+                    var streamIndex = operations.FindIndex(o => o.Entity.RowKey == stream.RowKey);
+                    var streamResponse = response.Value[streamIndex];
                     stream.ETag = streamResponse.Headers.ETag.Value;
+
+                    // TODO : We should probably also be updating the ETags in the original entities passed into the WriteOperation constructor
+                    // - If we don't end up doing this, RecordedEvent.RowKey may not be needed
 
                     return From(partition, stream);
                 }

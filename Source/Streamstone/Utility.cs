@@ -98,18 +98,6 @@ namespace Streamstone
             }
         }
 
-        public static class ResponseExtensions
-        {
-            public static Response GetResponseForEntity(this Response<IReadOnlyList<Response>> response, string rowKey)
-            {
-                return response.Value.Single(r =>
-                {
-                    var location = r.Headers.Single(h => h.Name == "Location").Value;
-                    return location.Contains($"RowKey='{rowKey}'");
-                });
-            }
-        }
-
         /// <summary>
         /// Represents lexicographical range
         /// </summary>
