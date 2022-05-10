@@ -72,6 +72,11 @@
 
     </PropertyGroup>
 
+    <!-- For Debug builds add a dev version suffix -->
+    <PropertyGroup Condition=" '$(Configuration)'=='Debug' ">
+        <VersionSuffix>dev</VersionSuffix>
+    </PropertyGroup>
+
     <Choose>
         <When Condition="'$(OfficialBuild)' != 'true'">
             <!-- On non-official builds we don't burn in a git sha.  In large part because it
