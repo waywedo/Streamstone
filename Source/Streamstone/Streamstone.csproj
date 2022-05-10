@@ -9,7 +9,6 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)'=='Release'">
-		<DocumentationFile>$(OutDir)\Streamstone.xml</DocumentationFile>
 		<TargetFramework>$(LibProjectTargetFramework)</TargetFramework>
 	</PropertyGroup>
 
