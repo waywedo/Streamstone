@@ -143,7 +143,7 @@ namespace Streamstone
 
         TableEntity TableEntity(StreamProperties properties)
         {
-            var entity = new TableEntity(Partition.Key, Partition.StreamRowKey())
+            var entity = new TableEntity(Partition.PartitionKey, Partition.StreamRowKey())
             {
                 { nameof(Version), Version }
             };
