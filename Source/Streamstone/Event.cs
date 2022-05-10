@@ -156,7 +156,14 @@ namespace Streamstone
         }
 
         static IEnumerable<EntityOperation> Prepare(IEnumerable<Include> includes, Partition partition) =>
-            includes.Select(include => include.Operation.Apply(partition));
+            includes.Select(include =>
+            {
+                if (include.Type == IncludeType.Replace && (include.Entity.ETag.Equals(null) || include.Entity.ETag.Equals("")))
+                {
+                    throw new InvalidOperationException("ETag cannot be null or empty for IncludeType.Replace");
+                }
+                return include.Operation.Apply(partition);
+            });
 
         internal int Operations => EventOperations.Length + IncludedOperations.Length;
     }
