@@ -17,11 +17,11 @@ namespace Example.Scenarios
 
         async Task SimultaneousProvisioning()
         {
-            await Stream.ProvisionAsync(Partition);
+            await Stream.ProvisionAsync(Partition, default);
 
             try
             {
-                await Stream.ProvisionAsync(Partition);
+                await Stream.ProvisionAsync(Partition, default);
             }
             catch (ConcurrencyConflictException)
             {
@@ -31,14 +31,14 @@ namespace Example.Scenarios
 
         async Task SimultaneousWriting()
         {
-            var a = await Stream.OpenAsync(Partition);
-            var b = await Stream.OpenAsync(Partition);
+            var a = await Stream.OpenAsync(Partition, default);
+            var b = await Stream.OpenAsync(Partition, default);
 
-            await Stream.WriteAsync(a, new EventData(EventId.From("123")));
-            
+            await Stream.WriteAsync(a, default, new EventData(EventId.From("123")));
+
             try
             {
-                await Stream.WriteAsync(b, new EventData(EventId.From("456")));
+                await Stream.WriteAsync(b, default, new EventData(EventId.From("456")));
             }
             catch (ConcurrencyConflictException)
             {
@@ -48,14 +48,14 @@ namespace Example.Scenarios
 
         async Task SimultaneousSettingOfStreamMetadata()
         {
-            var a = await Stream.OpenAsync(Partition);
-            var b = await Stream.OpenAsync(Partition);
+            var a = await Stream.OpenAsync(Partition, default);
+            var b = await Stream.OpenAsync(Partition, default);
 
-            await Stream.SetPropertiesAsync(a, StreamProperties.From(new {A = 42}));
+            await Stream.SetPropertiesAsync(a, StreamProperties.From(new { A = 42 }), default);
 
             try
             {
-                await Stream.SetPropertiesAsync(b, StreamProperties.From(new {A = 56}));
+                await Stream.SetPropertiesAsync(b, StreamProperties.From(new { A = 56 }), default);
             }
             catch (ConcurrencyConflictException)
             {
@@ -65,17 +65,17 @@ namespace Example.Scenarios
 
         async Task SequentiallyWritingToStreamIgnoringReturnedStreamHeader()
         {
-            var stream = await Stream.OpenAsync(Partition);
+            var stream = await Stream.OpenAsync(Partition, default);
 
-            var result = await Stream.WriteAsync(stream, new EventData(EventId.From("AAA")));
-            
+            var result = await Stream.WriteAsync(stream, default, new EventData(EventId.From("AAA")));
+
             // a new stream header is returned after each write, it contains new Etag
             // and it should be used for subsequent operations
-            // stream = result.Stream; 
-            
+            // stream = result.Stream;
+
             try
             {
-                await Stream.WriteAsync(stream, new EventData(EventId.From("BBB")));
+                await Stream.WriteAsync(stream, default, new EventData(EventId.From("BBB")));
             }
             catch (ConcurrencyConflictException)
             {

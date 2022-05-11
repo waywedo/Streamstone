@@ -26,13 +26,13 @@ namespace Streamstone.Scenarios
             partition.InsertStreamEntity();
 
             Assert.ThrowsAsync<ConcurrencyConflictException>(
-                async () => await Stream.ProvisionAsync(partition));
+                async () => await Stream.ProvisionAsync(partition, default));
         }
 
         [Test]
         public async Task When_partition_is_virgin()
         {
-            var stream = await Stream.ProvisionAsync(partition);
+            var stream = await Stream.ProvisionAsync(partition, default);
             var entity = partition.RetrieveStreamEntity();
 
             var expectedStream = new Stream(partition, entity.ETag, 0, StreamProperties.None);
@@ -56,7 +56,7 @@ namespace Streamstone.Scenarios
                 {"Active",  true}
             };
 
-            var stream = await Stream.ProvisionAsync(partition, StreamProperties.From(properties));
+            var stream = await Stream.ProvisionAsync(partition, StreamProperties.From(properties), default);
             var entity = partition.RetrieveStreamEntity();
 
             var expectedStream = new Stream

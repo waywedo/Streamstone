@@ -10,22 +10,22 @@ namespace Example.Scenarios
         public override async Task RunAsync()
         {
             await TryOpenNonExistentStream();
-            await TryOpenExistentStream();            
+            await TryOpenExistentStream();
         }
 
         async Task TryOpenNonExistentStream()
         {
-            var existent = await Stream.TryOpenAsync(Partition);
+            var existent = await Stream.TryOpenAsync(Partition, default);
 
-            Console.WriteLine("Trying to open non-existent stream. Found: {0}, Stream: {1}", 
+            Console.WriteLine("Trying to open non-existent stream. Found: {0}, Stream: {1}",
                               existent.Found, existent.Stream == null ? "<null>" : "?!?");
         }
 
         async Task TryOpenExistentStream()
         {
-            await Stream.ProvisionAsync(Partition);
+            await Stream.ProvisionAsync(Partition, default);
 
-            var existent = await Stream.TryOpenAsync(Partition);
+            var existent = await Stream.TryOpenAsync(Partition, default);
 
             Console.WriteLine("Trying to open existent stream. Found: {0}, Stream: {1}\r\nEtag - {2}, Version - {3}",
                                existent.Found, existent.Stream, existent.Stream.ETag, existent.Stream.Version);

@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Runtime.ExceptionServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Streamstone
@@ -27,13 +28,13 @@ namespace Streamstone
                 table = stream.Partition.Table;
             }
 
-            public async Task<Stream> ExecuteAsync()
+            public async Task<Stream> ExecuteAsync(CancellationToken ct)
             {
                 var insert = new Insert(stream);
 
                 try
                 {
-                    return insert.Result(await insert.ExecuteAsync(table).ConfigureAwait(false));
+                    return insert.Result(await insert.ExecuteAsync(table, ct).ConfigureAwait(false));
                 }
                 catch (RequestFailedException e)
                 {
@@ -53,9 +54,9 @@ namespace Streamstone
                     partition = stream.Partition;
                 }
 
-                internal async Task<Response> ExecuteAsync(TableClient table)
+                internal async Task<Response> ExecuteAsync(TableClient table, CancellationToken ct)
                 {
-                    return await table.AddEntityAsync(entity);
+                    return await table.AddEntityAsync(entity, ct);
                 }
 
                 internal void Handle(RequestFailedException exception)
@@ -91,7 +92,7 @@ namespace Streamstone
                 table = stream.Partition.Table;
             }
 
-            public async Task<StreamWriteResult> ExecuteAsync()
+            public async Task<StreamWriteResult> ExecuteAsync(CancellationToken ct)
             {
                 var current = stream;
 
@@ -101,7 +102,7 @@ namespace Streamstone
 
                     try
                     {
-                        current = batch.Result(await table.SubmitTransactionAsync(batch.Prepare()).ConfigureAwait(false));
+                        current = batch.Result(await table.SubmitTransactionAsync(batch.Prepare(), ct).ConfigureAwait(false));
                     }
                     catch (TableTransactionFailedException e)
                     {
@@ -280,13 +281,13 @@ namespace Streamstone
                 table = stream.Partition.Table;
             }
 
-            public async Task<Stream> ExecuteAsync()
+            public async Task<Stream> ExecuteAsync(CancellationToken ct)
             {
                 var replace = new Replace(stream, properties);
 
                 try
                 {
-                    return replace.Result(await replace.ExecuteAsync(table).ConfigureAwait(false));
+                    return replace.Result(await replace.ExecuteAsync(table, ct).ConfigureAwait(false));
                 }
                 catch (RequestFailedException e)
                 {
@@ -306,9 +307,9 @@ namespace Streamstone
                     partition = stream.Partition;
                 }
 
-                internal async Task<Response> ExecuteAsync(TableClient table)
+                internal async Task<Response> ExecuteAsync(TableClient table, CancellationToken ct)
                 {
-                    return await table.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace);
+                    return await table.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace, ct);
                 }
 
                 internal void Handle(RequestFailedException exception)
@@ -338,11 +339,11 @@ namespace Streamstone
                 table = partition.Table;
             }
 
-            public async Task<StreamOpenResult> ExecuteAsync()
+            public async Task<StreamOpenResult> ExecuteAsync(CancellationToken ct)
             {
                 try
                 {
-                    var entity = await table.GetEntityAsync<TableEntity>(partition.PartitionKey, partition.StreamRowKey());
+                    var entity = await table.GetEntityAsync<TableEntity>(partition.PartitionKey, partition.StreamRowKey(), null, ct);
                     return new StreamOpenResult(true, From(partition, entity));
                 }
                 catch (RequestFailedException)
@@ -368,10 +369,10 @@ namespace Streamstone
                 table = partition.Table;
             }
 
-            public async Task<StreamSlice<T>> ExecuteAsync(Func<TableEntity, T> transform)
+            public async Task<StreamSlice<T>> ExecuteAsync(Func<TableEntity, T> transform, CancellationToken ct)
             {
-                var eventsQuery = ExecuteQueryAsync(EventsQuery());
-                var streamRowQuery = ExecuteQueryAsync(StreamRowQuery());
+                var eventsQuery = ExecuteQueryAsync(EventsQuery(ct));
+                var streamRowQuery = ExecuteQueryAsync(StreamRowQuery(ct));
                 await Task.WhenAll(eventsQuery, streamRowQuery);
 
                 return Result(await eventsQuery, FindStreamEntity(await streamRowQuery), transform);
@@ -385,7 +386,7 @@ namespace Streamstone
                 return new StreamSlice<T>(stream, events, startVersion, sliceSize);
             }
 
-            AsyncPageable<TableEntity> EventsQuery()
+            AsyncPageable<TableEntity> EventsQuery(CancellationToken ct)
             {
                 var rowKeyStart = partition.EventVersionRowKey(startVersion);
                 var rowKeyEnd = partition.EventVersionRowKey(startVersion + sliceSize - 1);
@@ -394,15 +395,15 @@ namespace Streamstone
                     $" and {nameof(ITableEntity.RowKey)} ge '{rowKeyStart}'" +
                     $" and {nameof(ITableEntity.RowKey)} le '{rowKeyEnd}'";
 
-                return table.QueryAsync<TableEntity>(filter);
+                return table.QueryAsync<TableEntity>(filter, cancellationToken: ct);
             }
 
-            AsyncPageable<TableEntity> StreamRowQuery()
+            AsyncPageable<TableEntity> StreamRowQuery(CancellationToken ct)
             {
                 var filter = $"{nameof(ITableEntity.PartitionKey)} eq '{partition.PartitionKey}'" +
                     $" and {nameof(ITableEntity.RowKey)} eq '{partition.StreamRowKey()}'";
 
-                return table.QueryAsync<TableEntity>(filter);
+                return table.QueryAsync<TableEntity>(filter, cancellationToken: ct);
             }
 
             static async Task<List<TableEntity>> ExecuteQueryAsync(AsyncPageable<TableEntity> query)

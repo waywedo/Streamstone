@@ -22,7 +22,7 @@ namespace Streamstone.Scenarios
         {
             table = Storage.SetUp();
             partition = new Partition(table, "test");
-            stream = Stream.ProvisionAsync(partition).GetAwaiter().GetResult();
+            stream = Stream.ProvisionAsync(partition, default).GetAwaiter().GetResult();
         }
 
         [Test]
@@ -42,7 +42,7 @@ namespace Streamstone.Scenarios
 
             var options = new StreamWriteOptions {TrackChanges = false};
 
-            Assert.ThrowsAsync<RequestFailedException>(() => Stream.WriteAsync(stream, options, events),
+            Assert.ThrowsAsync<RequestFailedException>(() => Stream.WriteAsync(stream, options, default, events),
                 "Should fail since there conflicting operations");
 
             var stored = RetrieveTestEntity(entity.RowKey);
@@ -65,7 +65,7 @@ namespace Streamstone.Scenarios
             };
 
             Assert.DoesNotThrowAsync(() =>
-                Stream.WriteAsync(stream, events),
+                Stream.WriteAsync(stream, default, events),
                     "Should choose (use) the one with higher priority. Insert in this case");
 
             var stored = RetrieveTestEntity(entity.RowKey);
@@ -87,7 +87,7 @@ namespace Streamstone.Scenarios
             };
 
             Assert.ThrowsAsync<InvalidOperationException>(()=>
-                Stream.WriteAsync(stream, events),
+                Stream.WriteAsync(stream, default, events),
                     "Entity equality is by reference, since we need Etag from previous operation on the entity \n" +
                     "and since chunking may split events in separate batches its easier to have 'by-ref' equality.\n" +
                     "It also more memory efficient and less error-prone than 'by-value'");
@@ -104,7 +104,7 @@ namespace Streamstone.Scenarios
                 CreateEvent(Include.Delete(entity))
             };
 
-            await Stream.WriteAsync(stream, events);
+            await Stream.WriteAsync(stream, default, events);
 
             var stored = RetrieveTestEntity(entity.RowKey);
             Assert.That(stored, Is.Null);
@@ -122,7 +122,7 @@ namespace Streamstone.Scenarios
                 CreateEvent(Include.Delete(entity))
             };
 
-            await Stream.WriteAsync(stream, events);
+            await Stream.WriteAsync(stream, default, events);
 
             var stored = RetrieveTestEntity(entity.RowKey);
             Assert.That(stored, Is.Null);
@@ -134,12 +134,12 @@ namespace Streamstone.Scenarios
             var entity = new TestEntity(EntityRowKey, new ETag(null));
 
             Assert.ThrowsAsync<InvalidOperationException>(() =>
-                Stream.WriteAsync(stream, CreateEvent(Include.Replace(entity))));
+                Stream.WriteAsync(stream, default, CreateEvent(Include.Replace(entity))));
 
             entity.ETag = new ETag("");
 
             Assert.ThrowsAsync<InvalidOperationException>(() =>
-                Stream.WriteAsync(stream, CreateEvent(Include.Replace(entity))));
+                Stream.WriteAsync(stream, default, CreateEvent(Include.Replace(entity))));
         }
 
         [Test]
@@ -155,7 +155,7 @@ namespace Streamstone.Scenarios
             };
 
             Assert.DoesNotThrowAsync(() =>
-                Stream.WriteAsync(stream, CreateEvent(Include.Replace(entity))),
+                Stream.WriteAsync(stream, default, CreateEvent(Include.Replace(entity))),
                     "Will be always executed and will fully replace contents");
 
             var stored = RetrieveTestEntity(EntityRowKey);
@@ -168,7 +168,7 @@ namespace Streamstone.Scenarios
             var entity = new TestEntity(EntityRowKey);
 
             Assert.DoesNotThrowAsync(() =>
-                Stream.WriteAsync(stream, CreateEvent(Include.Replace(entity))),
+                Stream.WriteAsync(stream, default, CreateEvent(Include.Replace(entity))),
                     "Will be always executed and will fully replace contents");
         }
 
@@ -180,7 +180,7 @@ namespace Streamstone.Scenarios
 
             entity = new TestEntity(EntityRowKey);
             Assert.DoesNotThrowAsync(() =>
-                Stream.WriteAsync(stream, CreateEvent(Include.Delete(entity))),
+                Stream.WriteAsync(stream, default, CreateEvent(Include.Delete(entity))),
                     "Will be always executed and will delete row");
 
             var stored = RetrieveTestEntity(EntityRowKey);
@@ -193,7 +193,7 @@ namespace Streamstone.Scenarios
             var entity = new TestEntity(EntityRowKey);
 
             Assert.ThrowsAsync<TableTransactionFailedException>(() =>
-                Stream.WriteAsync(stream, CreateEvent(Include.Delete(entity))),
+                Stream.WriteAsync(stream, default, CreateEvent(Include.Delete(entity))),
                         "Will be always executed and exception will be thrown by the storage");
         }
 
@@ -212,7 +212,7 @@ namespace Streamstone.Scenarios
             };
 
             Assert.DoesNotThrowAsync(() =>
-                Stream.WriteAsync(stream, events),
+                Stream.WriteAsync(stream, default, events),
                     "Insert of entity with Etag=All is simply ignored by Azure");
 
             var stored = RetrieveTestEntity(EntityRowKey);
@@ -230,7 +230,7 @@ namespace Streamstone.Scenarios
             InsertTestEntity(entity);
 
             Assert.ThrowsAsync<IncludedOperationConflictException>(() =>
-                Stream.WriteAsync(stream, CreateEvent(Include.Insert(entity))),
+                Stream.WriteAsync(stream, default, CreateEvent(Include.Insert(entity))),
                     "Insert of entity with Etag=All does not behave like InsertOrReplace");
         }
 
@@ -273,7 +273,7 @@ namespace Streamstone.Scenarios
             };
 
             var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
-                Stream.WriteAsync(stream, events));
+                Stream.WriteAsync(stream, default, events));
 
             Assert.That(exception,
                 Has.Message.Contains("cannot be followed by"));
@@ -290,7 +290,7 @@ namespace Streamstone.Scenarios
                 CreateEvent(Include.Replace(entity))
             };
 
-            await Stream.WriteAsync(stream, events);
+            await Stream.WriteAsync(stream, default, events);
 
             var stored = RetrieveTestEntity(EntityRowKey);
             Assert.That(stored, Is.Not.Null);
@@ -307,7 +307,7 @@ namespace Streamstone.Scenarios
                 CreateEvent(Include.Delete(entity))
             };
 
-            await Stream.WriteAsync(stream, events);
+            await Stream.WriteAsync(stream, default, events);
 
             var stored = RetrieveTestEntity(EntityRowKey);
             Assert.That(stored, Is.Null,
@@ -328,7 +328,7 @@ namespace Streamstone.Scenarios
             };
 
             var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
-                Stream.WriteAsync(stream, events));
+                Stream.WriteAsync(stream, default, events));
 
             Assert.That(exception,
                 Has.Message.Contains("cannot be followed by"));
@@ -347,7 +347,7 @@ namespace Streamstone.Scenarios
                 CreateEvent(Include.Replace(entity))
             };
 
-            await Stream.WriteAsync(stream, events);
+            await Stream.WriteAsync(stream, default, events);
 
             var stored = RetrieveTestEntity(EntityRowKey);
             Assert.That(stored.Data, Is.EqualTo("zzz"));
@@ -365,7 +365,7 @@ namespace Streamstone.Scenarios
                 CreateEvent(Include.Delete(entity))
             };
 
-            await Stream.WriteAsync(stream, events);
+            await Stream.WriteAsync(stream, default, events);
 
             var stored = RetrieveTestEntity(EntityRowKey);
             Assert.That(stored, Is.Null, "Delete should win");
@@ -391,7 +391,7 @@ namespace Streamstone.Scenarios
                 CreateEvent(Include.Insert(entity))
             };
 
-            await Stream.WriteAsync(stream, events);
+            await Stream.WriteAsync(stream, default, events);
 
             var stored = RetrieveTestEntity(EntityRowKey);
             Assert.That(stored.Data, Is.EqualTo("zzz"));
@@ -409,7 +409,7 @@ namespace Streamstone.Scenarios
             };
 
             var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
-                Stream.WriteAsync(stream, events));
+                Stream.WriteAsync(stream, default, events));
 
             Assert.That(exception,
                 Has.Message.Contains("cannot be followed by"));
@@ -427,7 +427,7 @@ namespace Streamstone.Scenarios
             };
 
             var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
-                Stream.WriteAsync(stream, events));
+                Stream.WriteAsync(stream, default, events));
 
             Assert.That(exception,
                 Has.Message.Contains("cannot be followed by"));
@@ -448,7 +448,7 @@ namespace Streamstone.Scenarios
                 CreateEvent(Include.Insert(entity))
             };
 
-            await Stream.WriteAsync(stream, events);
+            await Stream.WriteAsync(stream, default, events);
 
             var stored = RetrieveTestEntity(EntityRowKey);
             Assert.That(stored, Is.Not.Null);
@@ -468,7 +468,7 @@ namespace Streamstone.Scenarios
             };
 
             var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
-                Stream.WriteAsync(stream, events));
+                Stream.WriteAsync(stream, default, events));
 
             Assert.That(exception,
                 Has.Message.Contains("cannot be applied to NULL"));
@@ -488,7 +488,7 @@ namespace Streamstone.Scenarios
             };
 
             var exception = Assert.ThrowsAsync<InvalidOperationException>(() =>
-                Stream.WriteAsync(stream, events));
+                Stream.WriteAsync(stream, default, events));
 
             Assert.That(exception,
                 Has.Message.Contains("cannot be applied to NULL"));
@@ -506,7 +506,7 @@ namespace Streamstone.Scenarios
             };
 
             Assert.ThrowsAsync<InvalidOperationException>(() =>
-                    Stream.WriteAsync(stream, events));
+                    Stream.WriteAsync(stream, default, events));
         }
 
         [Test]
@@ -522,7 +522,7 @@ namespace Streamstone.Scenarios
                 CreateEvent(Include.InsertOrMerge(entity))
             };
 
-            await Stream.WriteAsync(stream, events);
+            await Stream.WriteAsync(stream, default, events);
 
             var stored = RetrieveTestEntity(EntityRowKey);
             Assert.That(stored, Is.Not.Null);
@@ -541,7 +541,7 @@ namespace Streamstone.Scenarios
                 CreateEvent(Include.InsertOrReplace(entity))
             };
 
-            await Stream.WriteAsync(stream, events);
+            await Stream.WriteAsync(stream, default, events);
 
             var stored = RetrieveTestEntity(EntityRowKey);
             Assert.That(stored, Is.Not.Null);
@@ -560,7 +560,7 @@ namespace Streamstone.Scenarios
                 CreateEvent(Include.InsertOrReplace(entity))
             };
 
-            await Stream.WriteAsync(stream, events);
+            await Stream.WriteAsync(stream, default, events);
 
             var stored = RetrieveTestEntity(EntityRowKey);
             Assert.That(stored.Data, Is.EqualTo("zzz"));
@@ -587,7 +587,7 @@ namespace Streamstone.Scenarios
                 CreateEvent(Include.InsertOrMerge(entity))
             };
 
-            await Stream.WriteAsync(stream, events);
+            await Stream.WriteAsync(stream, default, events);
 
             var stored = RetrieveEntity<ExtendedTestEntity>(EntityRowKey);
             Assert.That(stored.Data, Is.EqualTo("zzz"));

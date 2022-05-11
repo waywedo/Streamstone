@@ -11,7 +11,7 @@ namespace Example.Scenarios
     {
         public override async Task RunAsync()
         {
-            var existent = await Stream.TryOpenAsync(Partition);
+            var existent = await Stream.TryOpenAsync(Partition, default);
             var stream = existent.Found ? existent.Stream : new Stream(Partition);
 
             Console.WriteLine("Writing to new stream along with making snapshot in partition '{0}'",
@@ -34,7 +34,7 @@ namespace Example.Scenarios
                 Event(new InventoryItemCheckedOut(Id, 40), snapshot)
             };
 
-            var result = await Stream.WriteAsync(stream, events);
+            var result = await Stream.WriteAsync(stream, default, events);
 
             Console.WriteLine("Successfully written to new stream.\r\nEtag: {0}, Version: {1}",
                               result.Stream.ETag, result.Stream.Version);

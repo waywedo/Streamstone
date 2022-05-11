@@ -24,12 +24,12 @@ namespace Example.Scenarios
                 {"Active",  true}
             };
 
-            await Stream.ProvisionAsync(partition, StreamProperties.From(properties));
+            await Stream.ProvisionAsync(partition, StreamProperties.From(properties), default);
 
             Console.WriteLine("Stream metadata specified during provisioning in partition '{0}'",
                               partition);
 
-            var stream = await Stream.OpenAsync(partition);
+            var stream = await Stream.OpenAsync(partition, default);
             Print(stream.Properties);
         }
 
@@ -44,12 +44,12 @@ namespace Example.Scenarios
             };
 
             var stream = new Stream(partition, StreamProperties.From(properties));
-            await Stream.WriteAsync(stream, new EventData());
+            await Stream.WriteAsync(stream, default, new EventData());
 
             Console.WriteLine("Stream metadata specified during writing to new stream in partition '{0}'",
                               partition);
 
-            stream = await Stream.OpenAsync(partition);
+            stream = await Stream.OpenAsync(partition, default);
             Print(stream.Properties);
         }
 
@@ -63,20 +63,20 @@ namespace Example.Scenarios
                 {"Active",  true}
             };
 
-            await Stream.ProvisionAsync(partition, StreamProperties.From(properties));
+            await Stream.ProvisionAsync(partition, StreamProperties.From(properties), default);
 
             Console.WriteLine("Stream metadata specified for stream in partition '{0}'",
                               partition);
 
-            var stream = await Stream.OpenAsync(partition);
+            var stream = await Stream.OpenAsync(partition, default);
             Print(stream.Properties);
 
             properties["Active"] = false;
-            await Stream.SetPropertiesAsync(stream, StreamProperties.From(properties));
+            await Stream.SetPropertiesAsync(stream, StreamProperties.From(properties), default);
 
             Console.WriteLine("Updated stream metadata in partition '{0}'", partition);
 
-            stream = await Stream.OpenAsync(partition);
+            stream = await Stream.OpenAsync(partition, default);
             Print(stream.Properties);
         }
 

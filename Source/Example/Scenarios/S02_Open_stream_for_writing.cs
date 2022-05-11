@@ -17,7 +17,7 @@ namespace Example.Scenarios
         {
             try
             {
-                await Stream.OpenAsync(Partition);
+                await Stream.OpenAsync(Partition, default);
             }
             catch (StreamNotFoundException)
             {
@@ -27,9 +27,9 @@ namespace Example.Scenarios
 
         async Task OpenExistingStream()
         {
-            await Stream.ProvisionAsync(Partition);
+            await Stream.ProvisionAsync(Partition, default);
 
-            var stream = await Stream.OpenAsync(Partition);
+            var stream = await Stream.OpenAsync(Partition, default);
 
             Console.WriteLine("Opened existing (empty) stream in partition '{0}'", stream.Partition);
             Console.WriteLine("Etag: {0}", stream.ETag);

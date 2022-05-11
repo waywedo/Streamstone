@@ -36,7 +36,7 @@ namespace Streamstone.Scenarios
                 .Select(CreateEvent)
                 .ToArray();
 
-            await Stream.WriteAsync(stream, events);
+            await Stream.WriteAsync(stream, default, events);
         }
 
         [Test]
@@ -55,7 +55,7 @@ namespace Streamstone.Scenarios
 
                 try
                 {
-                    await Stream.WriteAsync(stream, events);
+                    await Stream.WriteAsync(stream, default, events);
                 }
                 catch (Exception ex)
                 {
@@ -78,7 +78,7 @@ namespace Streamstone.Scenarios
                 var duplicate = new EventData(EventId.From("e2"));
 
                 Assert.ThrowsAsync<DuplicateEventException>(
-                    async () => await Stream.WriteAsync(stream, new EventData(EventId.From("e3")), duplicate));
+                    async () => await Stream.WriteAsync(stream, default, new EventData(EventId.From("e3")), duplicate));
 
                 contents.AssertNothingChanged();
             });

@@ -27,8 +27,8 @@ namespace Streamstone.Scenarios
         [Test]
         public async Task When_provisioning()
         {
-            await Stream.ProvisionAsync(virtual1);
-            await Stream.ProvisionAsync(virtual2);
+            await Stream.ProvisionAsync(virtual1, default);
+            await Stream.ProvisionAsync(virtual2, default);
 
             Assert.That(partition.RetrieveAll().Count, Is.EqualTo(2));
         }
@@ -36,10 +36,10 @@ namespace Streamstone.Scenarios
         [Test]
         public async Task When_opening()
         {
-            await Stream.ProvisionAsync(virtual1);
+            await Stream.ProvisionAsync(virtual1, default);
 
-            Assert.True((await Stream.TryOpenAsync(virtual1)).Found);
-            Assert.False((await Stream.TryOpenAsync(virtual2)).Found);
+            Assert.True((await Stream.TryOpenAsync(virtual1, default)).Found);
+            Assert.False((await Stream.TryOpenAsync(virtual2, default)).Found);
         }
 
         [Test]
@@ -51,14 +51,14 @@ namespace Streamstone.Scenarios
             var e1 = CreateEvent("e1");
             var e2 = CreateEvent("e2");
 
-            await Stream.WriteAsync(stream1, e1, e2);
-            await Stream.WriteAsync(stream2, e1, e2);
+            await Stream.WriteAsync(stream1, default, e1, e2);
+            await Stream.WriteAsync(stream2, default, e1, e2);
 
             Assert.That(partition.RetrieveAll().Count,
                 Is.EqualTo(2 + 2 * (2 * 2)));
 
-            var slice1 = await Stream.ReadAsync<TestRecordedEventEntity>(virtual1);
-            var slice2 = await Stream.ReadAsync<TestRecordedEventEntity>(virtual2);
+            var slice1 = await Stream.ReadAsync<TestRecordedEventEntity>(virtual1, default);
+            var slice2 = await Stream.ReadAsync<TestRecordedEventEntity>(virtual2, default);
 
             Assert.That(slice1.Events.Length, Is.EqualTo(2));
             Assert.That(slice2.Events.Length, Is.EqualTo(2));

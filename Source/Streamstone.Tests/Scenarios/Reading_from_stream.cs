@@ -26,24 +26,24 @@ namespace Streamstone.Scenarios
         public void When_start_version_is_less_than_1()
         {
             Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-                async () => await Stream.ReadAsync<TestEventEntity>(partition, 0));
+                async () => await Stream.ReadAsync<TestEventEntity>(partition, default, 0));
 
             Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-                async () => await Stream.ReadAsync<TestEventEntity>(partition, -1));
+                async () => await Stream.ReadAsync<TestEventEntity>(partition, default, -1));
         }
 
         [Test]
         public void When_stream_doesnt_exist()
         {
-            Assert.ThrowsAsync<StreamNotFoundException>(async () => await Stream.ReadAsync<TestEventEntity>(partition));
+            Assert.ThrowsAsync<StreamNotFoundException>(async () => await Stream.ReadAsync<TestEventEntity>(partition, default));
         }
 
         [Test]
         public async Task When_stream_is_empty()
         {
-            await Stream.ProvisionAsync(partition);
+            await Stream.ProvisionAsync(partition, default);
 
-            var slice = await Stream.ReadAsync<TestEventEntity>(partition);
+            var slice = await Stream.ReadAsync<TestEventEntity>(partition, default);
 
             Assert.That(slice.IsEndOfStream, Is.True);
             Assert.That(slice.Events.Length, Is.EqualTo(0));
@@ -53,9 +53,9 @@ namespace Streamstone.Scenarios
         public async Task When_version_is_greater_than_current_version_of_stream()
         {
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
-            await Stream.WriteAsync(new Stream(partition), events);
+            await Stream.WriteAsync(new Stream(partition), default, events);
 
-            var slice = await Stream.ReadAsync<TestEventEntity>(partition, events.Length + 1);
+            var slice = await Stream.ReadAsync<TestEventEntity>(partition, default, events.Length + 1);
 
             Assert.That(slice.IsEndOfStream, Is.True);
             Assert.That(slice.Events.Length, Is.EqualTo(0));
@@ -65,9 +65,9 @@ namespace Streamstone.Scenarios
         public async Task When_all_events_fit_to_single_slice()
         {
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
-            await Stream.WriteAsync(new Stream(partition), events);
+            await Stream.WriteAsync(new Stream(partition), default, events);
 
-            var slice = await Stream.ReadAsync<TestEventEntity>(partition, sliceSize: 2);
+            var slice = await Stream.ReadAsync<TestEventEntity>(partition, default, sliceSize: 2);
 
             Assert.That(slice.IsEndOfStream, Is.True);
             Assert.That(slice.Events.Length, Is.EqualTo(2));
@@ -77,15 +77,15 @@ namespace Streamstone.Scenarios
         public async Task When_all_events_do_not_fit_single_slice()
         {
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
-            await Stream.WriteAsync(new Stream(partition), events);
+            await Stream.WriteAsync(new Stream(partition), default, events);
 
-            var slice = await Stream.ReadAsync<TestRecordedEventEntity>(partition, sliceSize: 1);
+            var slice = await Stream.ReadAsync<TestRecordedEventEntity>(partition, default, sliceSize: 1);
 
             Assert.That(slice.IsEndOfStream, Is.False);
             Assert.That(slice.Events.Length, Is.EqualTo(1));
             Assert.That(slice.Events[0].Version, Is.EqualTo(1));
 
-            slice = await Stream.ReadAsync<TestRecordedEventEntity>(partition, slice.Events.Last().Version + 1);
+            slice = await Stream.ReadAsync<TestRecordedEventEntity>(partition, default, slice.Events.Last().Version + 1);
 
             Assert.That(slice.IsEndOfStream, Is.True);
             Assert.That(slice.Events.Length, Is.EqualTo(1));
@@ -98,7 +98,7 @@ namespace Streamstone.Scenarios
             const int sizeOverTheAzureLimit = 1500;
             const int numberOfWriteBatches = 50;
 
-            var stream = await Stream.ProvisionAsync(partition);
+            var stream = await Stream.ProvisionAsync(partition, default);
 
             foreach (var batch in Enumerable.Range(1, numberOfWriteBatches))
             {
@@ -107,11 +107,11 @@ namespace Streamstone.Scenarios
                     .Select(i => CreateEvent(batch + "e" + i))
                     .ToArray();
 
-                var result = await Stream.WriteAsync(stream, events);
+                var result = await Stream.WriteAsync(stream, default, events);
                 stream = result.Stream;
             }
 
-            var slice = await Stream.ReadAsync<TestRecordedEventEntity>(partition, sliceSize: 1500);
+            var slice = await Stream.ReadAsync<TestRecordedEventEntity>(partition, default, sliceSize: 1500);
 
             Assert.That(slice.IsEndOfStream, Is.True);
             Assert.That(slice.Events.Length, Is.EqualTo(1500));
@@ -121,9 +121,9 @@ namespace Streamstone.Scenarios
         public async Task When_requested_result_is_EventProperties()
         {
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
-            await Stream.WriteAsync(new Stream(partition), events);
+            await Stream.WriteAsync(new Stream(partition), default, events);
 
-            var slice = await Stream.ReadAsync(partition, sliceSize: 2);
+            var slice = await Stream.ReadAsync(partition, default, sliceSize: 2);
 
             Assert.That(slice.IsEndOfStream, Is.True);
             Assert.That(slice.Events.Length, Is.EqualTo(2));
@@ -137,9 +137,9 @@ namespace Streamstone.Scenarios
         public async Task When_requested_result_is_dynamic_TableEntity()
         {
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
-            await Stream.WriteAsync(new Stream(partition), events);
+            await Stream.WriteAsync(new Stream(partition), default, events);
 
-            var slice = await Stream.ReadAsync<TableEntity>(partition, sliceSize: 2);
+            var slice = await Stream.ReadAsync<TableEntity>(partition, default, sliceSize: 2);
 
             Assert.That(slice.IsEndOfStream, Is.True);
             Assert.That(slice.Events.Length, Is.EqualTo(2));
@@ -156,9 +156,9 @@ namespace Streamstone.Scenarios
         public async Task When_requested_result_is_custom_ITableEntity()
         {
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
-            await Stream.WriteAsync(new Stream(partition), events);
+            await Stream.WriteAsync(new Stream(partition), default, events);
 
-            var slice = await Stream.ReadAsync<CustomTableEntity>(partition, sliceSize: 2);
+            var slice = await Stream.ReadAsync<CustomTableEntity>(partition, default, sliceSize: 2);
 
             Assert.That(slice.IsEndOfStream, Is.True);
             Assert.That(slice.Events.Length, Is.EqualTo(2));

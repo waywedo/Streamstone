@@ -9,7 +9,7 @@ namespace Example.Scenarios
     {
         public override async Task RunAsync()
         {
-            var result = await Stream.WriteAsync(new Stream(Partition), new EventData(EventId.From("42")));
+            var result = await Stream.WriteAsync(new Stream(Partition), default, new EventData(EventId.From("42")));
 
             try
             {
@@ -19,7 +19,7 @@ namespace Example.Scenarios
                     new EventData(EventId.From("42"))  // conflicting (duplicate) event
                 };
 
-                await Stream.WriteAsync(result.Stream, events);
+                await Stream.WriteAsync(result.Stream, default, events);
             }
             catch (DuplicateEventException e)
             {

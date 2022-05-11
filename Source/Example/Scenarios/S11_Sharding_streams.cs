@@ -17,8 +17,8 @@ namespace Example.Scenarios
             var partition1 = Resolve("shard-test-1");
             var partition2 = Resolve("shard-test-2");
 
-            await Stream.ProvisionAsync(partition1);
-            await Stream.ProvisionAsync(partition2);
+            await Stream.ProvisionAsync(partition1, default);
+            await Stream.ProvisionAsync(partition2, default);
         }
 
         Partition Resolve(string stream)

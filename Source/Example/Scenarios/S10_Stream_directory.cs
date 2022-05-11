@@ -28,8 +28,8 @@ namespace Example.Scenarios
         {
             var properties = StreamProperties.From(new { RowType = "STREAM" });
 
-            await Stream.ProvisionAsync(VirtualPartition("11"), properties);
-            await Stream.ProvisionAsync(VirtualPartition("22"), properties);
+            await Stream.ProvisionAsync(VirtualPartition("11"), properties, default);
+            await Stream.ProvisionAsync(VirtualPartition("22"), properties, default);
 
             // the below code will scan all rows in a single physical partition
             // also, if there more than 1000 streams (header rows), pagination need to be utilized as per regular ATS limits
@@ -37,7 +37,7 @@ namespace Example.Scenarios
                     $" and {(nameof(StreamHeaderEntity.RowType))} eq 'STREAM'";
 
             var count = (await Partition.Table
-                .ExecuteQueryAsync<StreamHeaderEntity>(filter))
+                .ExecuteQueryAsync<StreamHeaderEntity>(filter, default))
                 .Count();
 
             Console.WriteLine(count);
@@ -54,18 +54,18 @@ namespace Example.Scenarios
         async Task MultipleStreamsPerPartitionUsingProjection()
         {
             await Stream.WriteAsync(
-                new Stream(VirtualPartition("sid-33")),
+                new Stream(VirtualPartition("sid-33")), default,
                 Event(Include.Insert(new StreamHeaderEntity("sid-33"))));
 
             await Stream.WriteAsync(
-                new Stream(VirtualPartition("sid-44")),
+                new Stream(VirtualPartition("sid-44")), default,
                 Event(Include.Insert(new StreamHeaderEntity("sid-44"))));
 
             // the below code will scan only a limited range of rows in a single physical partition
             // also, if there more than 1000 streams (header rows), pagination need to be utilized as per regular ATS limits
 
             var count = (await Partition
-                .RowKeyPrefixQueryAsync<TableEntity>(StreamHeaderEntity.Prefix))
+                .RowKeyPrefixQueryAsync<TableEntity>(StreamHeaderEntity.Prefix, default))
                 .ToList()
                 .Count;
 
@@ -138,7 +138,7 @@ namespace Example.Scenarios
             public async Task<Stream> ProvisionAsync(Partition partition)
             {
                 await Record(partition);
-                return await Stream.ProvisionAsync(partition);
+                return await Stream.ProvisionAsync(partition, default);
             }
 
             public async Task<StreamWriteResult> WriteAsync(Stream stream, params EventData[] events)
@@ -146,7 +146,7 @@ namespace Example.Scenarios
                 if (stream.IsTransient)
                     await Record(stream.Partition);
 
-                return await Stream.WriteAsync(stream, events);
+                return await Stream.WriteAsync(stream, default, events);
             }
 
             async Task Record(Partition partition)

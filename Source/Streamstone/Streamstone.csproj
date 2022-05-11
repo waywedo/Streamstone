@@ -15,7 +15,7 @@
 	<PropertyGroup>
 		<PackageId>waywedo.Streamstone</PackageId>
 		<Title>Streamstone core library</Title>
-		<VersionPrefix>1.1.0</VersionPrefix>
+		<VersionPrefix>1.1.1</VersionPrefix>
 		<Description>Way We Do specific version of Streamstone. Primarily modified to update Azure Table Storage API's and updgrade Stream.Version from int to long.</Description>
 	</PropertyGroup>
 

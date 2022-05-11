@@ -22,16 +22,16 @@ namespace Example.Scenarios
                 .Select(Event)
                 .ToArray();
 
-            var existent = await Stream.TryOpenAsync(Partition);
+            var existent = await Stream.TryOpenAsync(Partition, default);
 	        var stream = existent.Found ? existent.Stream : new Stream(Partition);
-	        await Stream.WriteAsync(stream, events);
+	        await Stream.WriteAsync(stream, default, events);
         }
 
         async Task ReadSlice()
         {
             Console.WriteLine("Reading single slice from specified start version and using specified slice size");
 
-            var slice = await Stream.ReadAsync<EventEntity>(Partition, startVersion: 2, sliceSize: 2);
+            var slice = await Stream.ReadAsync<EventEntity>(Partition, default, startVersion: 2, sliceSize: 2);
             foreach (var @event in slice.Events)
                 Console.WriteLine("{0}: {1}-{2}", @event.Version, @event.Type, @event.Data);
 
@@ -48,7 +48,7 @@ namespace Example.Scenarios
 
             do
             {
-                slice = await Stream.ReadAsync<EventEntity>(Partition, nextSliceStart, sliceSize: 1);
+                slice = await Stream.ReadAsync<EventEntity>(Partition, default, nextSliceStart, sliceSize: 1);
 
                 foreach (var @event in slice.Events)
                     Console.WriteLine("{0}:{1} {2}-{3}", @event.Id, @event.Version, @event.Type, @event.Data);

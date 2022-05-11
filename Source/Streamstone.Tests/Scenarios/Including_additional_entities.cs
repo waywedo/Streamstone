@@ -33,7 +33,7 @@ namespace Streamstone.Scenarios
                 CreateEvent("e2", Include.Insert(entity2))
             };
 
-            var result = await Stream.WriteAsync(new Stream(partition), events);
+            var result = await Stream.WriteAsync(new Stream(partition), default, events);
 
             var stored = RetrieveTestEntity(entity1.RowKey);
             Assert.That(stored, Is.Not.Null);
@@ -55,14 +55,14 @@ namespace Streamstone.Scenarios
             var include = Include.Insert(entity);
 
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2", include) };
-            var result = await Stream.WriteAsync(new Stream(partition), events);
+            var result = await Stream.WriteAsync(new Stream(partition), default, events);
 
             entity = new TestEntity("INV-0001");
             include = Include.Insert(entity);
 
             events = new[] { CreateEvent("e3", include) };
             Assert.ThrowsAsync<IncludedOperationConflictException>(
-                async () => await Stream.WriteAsync(result.Stream, events));
+                async () => await Stream.WriteAsync(result.Stream, default, events));
         }
 
         [Test]
@@ -72,14 +72,14 @@ namespace Streamstone.Scenarios
             var include = Include.Insert(entity);
 
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2", include) };
-            var result = await Stream.WriteAsync(new Stream(partition), events);
+            var result = await Stream.WriteAsync(new Stream(partition), default, events);
 
             entity = new TestEntity("INV-0001");
             include = Include.Insert(entity);
 
             events = new[] { CreateEvent("e1", include) };
             Assert.ThrowsAsync<DuplicateEventException>(
-                async () => await Stream.WriteAsync(result.Stream, events));
+                async () => await Stream.WriteAsync(result.Stream, default, events));
         }
 
         [Test]
@@ -89,7 +89,7 @@ namespace Streamstone.Scenarios
             var include = Include.Insert(entity);
 
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2", include) };
-            var result = await Stream.WriteAsync(new Stream(partition), events);
+            var result = await Stream.WriteAsync(new Stream(partition), default, events);
 
             partition.UpdateStreamEntity();
 
@@ -98,7 +98,7 @@ namespace Streamstone.Scenarios
 
             events = new[] { CreateEvent("e3", include) };
             Assert.ThrowsAsync<ConcurrencyConflictException>(
-                async () => await Stream.WriteAsync(result.Stream, events));
+                async () => await Stream.WriteAsync(result.Stream, default, events));
         }
 
         [Test]
@@ -111,7 +111,7 @@ namespace Streamstone.Scenarios
                 .Select(i => CreateEvent("e" + i, Include.Insert(new TestEntity(i.ToString()))))
                 .ToArray();
 
-            var result = await Stream.WriteAsync(stream, events);
+            var result = await Stream.WriteAsync(stream, default, events);
 
             var storedEvents = result.Events;
             Assert.That(storedEvents.Length, Is.EqualTo(events.Length));
@@ -142,7 +142,7 @@ namespace Streamstone.Scenarios
             );
 
             Assert.ThrowsAsync<InvalidOperationException>(
-                async () => await Stream.WriteAsync(stream, @event));
+                async () => await Stream.WriteAsync(stream, default, @event));
         }
 
         TestEntity RetrieveTestEntity(string rowKey)

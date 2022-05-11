@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Streamstone
@@ -23,13 +24,13 @@ namespace Streamstone
             /// <param name="partition">The partition.</param>
             /// <param name="prefix">The row key prefix.</param>
             /// <returns>An instance of <see cref="IEnumerable{T}"/> that allow to scroll over all rows</returns>
-            public static async Task<IEnumerable<TEntity>> RowKeyPrefixQueryAsync<TEntity>(this Partition partition, string prefix)
+            public static async Task<IEnumerable<TEntity>> RowKeyPrefixQueryAsync<TEntity>(this Partition partition, string prefix, CancellationToken ct)
                 where TEntity : class, ITableEntity, new()
             {
                 var filter = $"{nameof(ITableEntity.PartitionKey)} eq '{partition.PartitionKey}'" +
                     $" and {WhereRowKeyPrefixFilter(prefix)}";
 
-                return (await ExecuteQueryAsync<TableEntity>(partition.Table, filter))
+                return (await ExecuteQueryAsync<TableEntity>(partition.Table, filter, ct))
                     .Select(e => e.AsEntity<TEntity>());
             }
 
@@ -40,10 +41,10 @@ namespace Streamstone
             /// <param name="table">The table.</param>
             /// <param name="filter">The row key prefix filter.</param>
             /// <returns>An instance of <see cref="IEnumerable{T}"/> that alllow further criterias to be added</returns>
-            public static async Task<IEnumerable<TEntity>> ExecuteQueryAsync<TEntity>(this TableClient table, string filter)
+            public static async Task<IEnumerable<TEntity>> ExecuteQueryAsync<TEntity>(this TableClient table, string filter, CancellationToken ct)
                 where TEntity : class, ITableEntity, new()
             {
-                var query = table.QueryAsync<TableEntity>(filter);
+                var query = table.QueryAsync<TableEntity>(filter, cancellationToken: ct);
 
                 var result = new List<TEntity>();
                 await foreach (var entity in query)

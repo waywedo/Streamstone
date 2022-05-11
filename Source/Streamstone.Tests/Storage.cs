@@ -107,7 +107,7 @@ namespace Streamstone
 
         public static EventEntity[] RetrieveEventEntities(this Partition partition)
         {
-            return partition.RowKeyPrefixQueryAsync<EventEntity>(Api.EventRowKeyPrefix).Result.ToArray();
+            return partition.RowKeyPrefixQueryAsync<EventEntity>(Api.EventRowKeyPrefix, default).Result.ToArray();
         }
 
         public static void InsertEventIdEntities(this Partition partition, params string[] ids)
@@ -126,7 +126,7 @@ namespace Streamstone
 
         public static EventIdEntity[] RetrieveEventIdEntities(this Partition partition)
         {
-            return partition.RowKeyPrefixQueryAsync<EventIdEntity>(Api.EventIdRowKeyPrefix).Result.ToArray();
+            return partition.RowKeyPrefixQueryAsync<EventIdEntity>(Api.EventIdRowKeyPrefix, default).Result.ToArray();
         }
 
         public static List<TableEntity> RetrieveAll(this Partition partition)

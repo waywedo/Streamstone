@@ -31,7 +31,7 @@ namespace Streamstone.Scenarios
         [TestCase(false, true, true, Description = "Event + ID. Degenerate case (corruption or manual edit)")]
         public async Task When_write_conflict(bool streamHeaderChanged, bool eventEntityExists, bool idEntityExists)
         {
-            var stream = await Stream.ProvisionAsync(partition);
+            var stream = await Stream.ProvisionAsync(partition, default);
 
             if (streamHeaderChanged)
                 partition.UpdateStreamEntity();
@@ -47,7 +47,7 @@ namespace Streamstone.Scenarios
             partition.CaptureContents(contents =>
             {
                 Assert.ThrowsAsync<ConcurrencyConflictException>(
-                    async () => await Stream.WriteAsync(stream, @event));
+                    async () => await Stream.WriteAsync(stream, default, @event));
 
                 contents.AssertNothingChanged();
             });
@@ -56,12 +56,12 @@ namespace Streamstone.Scenarios
         [Test]
         public async Task When_writing_together_with_creating_stream_and_stream_already_exists()
         {
-            await Stream.ProvisionAsync(partition);
+            await Stream.ProvisionAsync(partition, default);
 
             partition.CaptureContents(contents =>
             {
                 Assert.ThrowsAsync<ConcurrencyConflictException>(
-                    async () => await Stream.WriteAsync(new Stream(partition), CreateEvent()));
+                    async () => await Stream.WriteAsync(new Stream(partition), default, CreateEvent()));
 
                 contents.AssertNothingChanged();
             });
@@ -78,7 +78,7 @@ namespace Streamstone.Scenarios
                 var duplicate = CreateEvent("e2");
 
                 Assert.ThrowsAsync<DuplicateEventException>(
-                    async () => await Stream.WriteAsync(stream, CreateEvent("e3"), duplicate));
+                    async () => await Stream.WriteAsync(stream, default, CreateEvent("e3"), duplicate));
 
                 contents.AssertNothingChanged();
             });
@@ -90,7 +90,7 @@ namespace Streamstone.Scenarios
             var stream = new Stream(partition);
 
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
-            var result = await Stream.WriteAsync(stream, events);
+            var result = await Stream.WriteAsync(stream, default, events);
 
             AssertModifiedStream(stream, result, version: 2);
             AssertStreamEntity(version: 2);
@@ -121,7 +121,7 @@ namespace Streamstone.Scenarios
         public async Task When_writing_to_nonexisting_stream()
         {
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
-            var result = await Stream.WriteAsync(new Stream(partition), events);
+            var result = await Stream.WriteAsync(new Stream(partition), default, events);
 
             AssertNewStream(result, version: 2);
             AssertStreamEntity(version: 2);
@@ -154,7 +154,7 @@ namespace Streamstone.Scenarios
             var stream = new Stream(partition);
 
             EventData[] events = { CreateEvent(), CreateEvent() };
-            var result = await Stream.WriteAsync(stream, events);
+            var result = await Stream.WriteAsync(stream, default, events);
 
             AssertModifiedStream(stream, result, version: 2);
             AssertStreamEntity(version: 2);
@@ -190,7 +190,7 @@ namespace Streamstone.Scenarios
             var stream = new Stream(partition, StreamProperties.From(properties));
 
             EventData[] events = { CreateEvent("e1"), CreateEvent("e2") };
-            var result = await Stream.WriteAsync(stream, events);
+            var result = await Stream.WriteAsync(stream, default, events);
 
             AssertNewStream(result, 2, properties);
             AssertStreamEntity(2, properties);
@@ -227,7 +227,7 @@ namespace Streamstone.Scenarios
                 .Select(i => CreateEvent())
                 .ToArray();
 
-            var result = await Stream.WriteAsync(stream, events);
+            var result = await Stream.WriteAsync(stream, default, events);
 
             AssertModifiedStream(stream, result, version: events.Length);
             AssertStreamEntity(version: events.Length);
@@ -244,12 +244,12 @@ namespace Streamstone.Scenarios
         {
             var expectedVersion = 0;
 
-            await Stream.WriteAsync(partition, expectedVersion,
+            await Stream.WriteAsync(partition, expectedVersion, default,
                 CreateEvent("e1"), CreateEvent("e2"));
 
             expectedVersion = 2;
 
-            await Stream.WriteAsync(partition, expectedVersion,
+            await Stream.WriteAsync(partition, expectedVersion, default,
                 CreateEvent("e3"), CreateEvent("e4"));
 
             var eventEntities = partition.RetrieveEventEntities();
@@ -261,13 +261,13 @@ namespace Streamstone.Scenarios
         {
             var expectedVersion = 0;
 
-            await Stream.WriteAsync(partition, expectedVersion,
+            await Stream.WriteAsync(partition, expectedVersion, default,
                                     CreateEvent("e1"), CreateEvent("e2"));
 
             expectedVersion = 0;
 
             Assert.ThrowsAsync<ConcurrencyConflictException>(async () => await
-                Stream.WriteAsync(partition, expectedVersion, CreateEvent("e1"), CreateEvent("e2")));
+                Stream.WriteAsync(partition, expectedVersion, default, CreateEvent("e1"), CreateEvent("e2")));
         }
 
         [Test]
@@ -280,14 +280,14 @@ namespace Streamstone.Scenarios
             };
 
             var stream = new Stream(partition, StreamProperties.From(properties));
-            var result = await Stream.WriteAsync(stream, CreateEvent("e1"), CreateEvent("e2"));
+            var result = await Stream.WriteAsync(stream, default, CreateEvent("e1"), CreateEvent("e2"));
             stream = result.Stream;
 
             AssertNewStream(result, 2, properties);
             AssertStreamEntity(2, properties);
 
             var restored = Stream.From(partition, stream.ETag, stream.Version, properties: null);
-            result = await Stream.WriteAsync(restored, CreateEvent("e3"));
+            result = await Stream.WriteAsync(restored, default, CreateEvent("e3"));
 
             AssertNewStream(result, 3, new { });
             AssertStreamEntity(3, properties);
@@ -303,7 +303,7 @@ namespace Streamstone.Scenarios
             };
 
             var stream = new Stream(partition, StreamProperties.From(properties));
-            var result = await Stream.WriteAsync(stream, CreateEvent("e1"), CreateEvent("e2"));
+            var result = await Stream.WriteAsync(stream, default, CreateEvent("e1"), CreateEvent("e2"));
             stream = result.Stream;
 
             AssertNewStream(result, 2, properties);
@@ -315,7 +315,7 @@ namespace Streamstone.Scenarios
             };
 
             var restored = Stream.From(partition, stream.ETag, stream.Version, StreamProperties.From(replaced));
-            result = await Stream.WriteAsync(restored, CreateEvent("e3"));
+            result = await Stream.WriteAsync(restored, default, CreateEvent("e3"));
 
             AssertNewStream(result, 3, replaced);
             AssertStreamEntity(3, replaced);
