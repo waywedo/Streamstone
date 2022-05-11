@@ -35,7 +35,7 @@ namespace Streamstone
 
         internal StreamNotFoundException(Partition partition)
             : base("Stream header was not found in partition '{1}' which resides in '{0}' table located at {2}",
-                   partition.Table, partition, partition.Table.AccountName)
+                   partition.Table.Name, partition, partition.Table.AccountName)
         {
             Partition = partition;
         }
@@ -58,7 +58,7 @@ namespace Streamstone
 
         internal DuplicateEventException(Partition partition, string id)
             : base("Found existing event with id '{3}' in partition '{1}' which resides in '{0}' table located at {2}",
-                   partition.Table, partition, partition.Table.AccountName, id)
+                   partition.Table.Name, partition, partition.Table.AccountName, id)
         {
             Partition = partition;
             Id = id;
@@ -91,7 +91,7 @@ namespace Streamstone
         {
             var message = string.Format(
                 "Included '{3}' operation had conflicts in partition '{1}' which resides in '{0}' table located at {2}",
-                partition.Table, partition, partition.Table.AccountName,
+                partition.Table.Name, partition, partition.Table.AccountName,
                 include.GetType().Name);
 
             return new IncludedOperationConflictException(partition, include.Entity, message);
@@ -110,7 +110,7 @@ namespace Streamstone
 
         internal ConcurrencyConflictException(Partition partition, string details)
             : base("Concurrent write detected for partition '{1}' which resides in table '{0}' located at {2}. See details below.\n{3}",
-                   partition.Table, partition, partition.Table.AccountName, details)
+                   partition.Table.Name, partition, partition.Table.AccountName, details)
         {
             Partition = partition;
         }
