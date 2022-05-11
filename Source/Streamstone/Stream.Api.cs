@@ -202,7 +202,8 @@ namespace Streamstone
         /// <exception cref="ConcurrencyConflictException">
         ///     If write operation has conflicts
         /// </exception>
-        public static async Task<StreamWriteResult> WriteAsync(Partition partition, StreamWriteOptions options, int expectedVersion, CancellationToken ct, params EventData[] events)
+        public static async Task<StreamWriteResult> WriteAsync(Partition partition, StreamWriteOptions options,
+            long expectedVersion, CancellationToken ct, params EventData[] events)
         {
             Requires.NotNull(partition, nameof(partition));
             Requires.GreaterThanOrEqualToZero(expectedVersion, nameof(expectedVersion));
@@ -330,8 +331,8 @@ namespace Streamstone
         /// </exception>
         public static Task<StreamSlice<T>> ReadAsync<T>(
             Partition partition, CancellationToken ct,
-            int startVersion = 1,
-            int sliceSize = DefaultSliceSize)
+            long startVersion = 1,
+            long sliceSize = DefaultSliceSize)
             where T : class, new()
         {
             Requires.NotNull(partition, nameof(partition));
@@ -366,8 +367,8 @@ namespace Streamstone
         /// </exception>
         public static Task<StreamSlice<EventProperties>> ReadAsync(
             Partition partition, CancellationToken ct,
-            int startVersion = 1,
-            int sliceSize = DefaultSliceSize)
+            long startVersion = 1,
+            long sliceSize = DefaultSliceSize)
         {
             Requires.NotNull(partition, nameof(partition));
             Requires.GreaterThanOrEqualToOne(startVersion, nameof(startVersion));

@@ -14,7 +14,7 @@ namespace Streamstone
             Properties = StreamProperties.None;
         }
 
-        public StreamEntity(Partition partition, ETag etag, int version, StreamProperties properties)
+        public StreamEntity(Partition partition, ETag etag, long version, StreamProperties properties)
         {
             Partition = partition;
             PartitionKey = partition.PartitionKey;
@@ -29,7 +29,7 @@ namespace Streamstone
         public DateTimeOffset? Timestamp { get; set; }
         public ETag ETag { get; set; }
 
-        public int Version { get; set; }
+        public long Version { get; set; }
 
         [IgnoreDataMember]
         public StreamProperties Properties { get; set; }
@@ -45,7 +45,7 @@ namespace Streamstone
                 RowKey = entity.RowKey,
                 ETag = entity.ETag,
                 Timestamp = entity.Timestamp,
-                Version = (int)entity.GetInt32("Version"),
+                Version = (long)entity.GetInt64("Version"),
                 Properties = StreamProperties.From(entity)
             };
         }

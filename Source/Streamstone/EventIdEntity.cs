@@ -25,7 +25,7 @@ namespace Streamstone
         public DateTimeOffset? Timestamp { get; set; }
         public ETag ETag { get; set; }
 
-        public int Version { get; set; }
+        public long Version { get; set; }
 
         [IgnoreDataMember]
         public RecordedEvent Event { get; set; }

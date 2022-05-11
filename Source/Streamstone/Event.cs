@@ -92,7 +92,7 @@ namespace Streamstone
             Properties = properties;
         }
 
-        internal RecordedEvent Record(Partition partition, int version) =>
+        internal RecordedEvent Record(Partition partition, long version) =>
             new RecordedEvent(Id, Properties, Includes, partition, version);
     }
 
@@ -115,12 +115,12 @@ namespace Streamstone
         /// <summary>
         /// A sequence number assigned by a stream to this event.
         /// </summary>
-        public int Version { get; }
+        public long Version { get; }
 
         internal readonly EntityOperation[] EventOperations;
         internal readonly EntityOperation[] IncludedOperations;
 
-        internal RecordedEvent(EventId id, EventProperties properties, IEnumerable<Include> includes, Partition partition, int version)
+        internal RecordedEvent(EventId id, EventProperties properties, IEnumerable<Include> includes, Partition partition, long version)
         {
             Id = id;
             Version = version;
