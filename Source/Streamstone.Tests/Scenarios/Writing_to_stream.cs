@@ -386,6 +386,7 @@ namespace Streamstone.Scenarios
             };
 
             expected.ToExpectedObject().ShouldMatch(actual);
+            Assert.That(actual.ETag.ToString, Is.Not.Empty);
         }
 
         static void AssertEventIdEntity(string id, int version, EventIdEntity actual)

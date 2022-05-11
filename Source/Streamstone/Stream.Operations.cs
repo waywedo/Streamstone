@@ -239,9 +239,6 @@ namespace Streamstone
                     var streamResponse = response.Value[streamIndex];
                     stream.ETag = streamResponse.Headers.ETag.Value;
 
-                    // TODO : We should probably also be updating the ETags in the original entities passed into the WriteOperation constructor
-                    // - If we don't end up doing this, RecordedEvent.RowKey may not be needed
-
                     return From(partition, stream);
                 }
 

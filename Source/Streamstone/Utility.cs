@@ -1,5 +1,6 @@
 ﻿using Azure;
 using Azure.Data.Tables;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -90,9 +91,17 @@ namespace Streamstone
                         continue;
                     }
 
-                    if (entity.TryGetValue(property.Name, out var value))
+                    if (property.Name == "ETag")
+                    {
+                        property.SetValue(target, entity.ETag);
+                    }
+                    else if (entity.TryGetValue(property.Name, out var value))
                     {
                         property.SetValue(target, value);
+                    }
+                    else
+                    {
+                        throw new Exception($"Failed to find value for property '{property.Name}' when copying TableEntity to {target.GetType().Name}");
                     }
                 }
             }

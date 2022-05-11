@@ -117,11 +117,6 @@ namespace Streamstone
         /// </summary>
         public int Version { get; }
 
-        /// <summary>
-        /// The RowKey for the contained event.
-        /// </summary>
-        public string RowKey { get; }
-
         internal readonly EntityOperation[] EventOperations;
         internal readonly EntityOperation[] IncludedOperations;
 
@@ -132,7 +127,6 @@ namespace Streamstone
             Properties = properties;
             EventOperations = Prepare(partition).ToArray();
             IncludedOperations = Prepare(includes, partition).ToArray();
-            RowKey = partition.EventVersionRowKey(version);
         }
 
         IEnumerable<EntityOperation> Prepare(Partition partition)
