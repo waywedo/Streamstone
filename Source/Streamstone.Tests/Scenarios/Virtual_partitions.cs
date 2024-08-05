@@ -38,8 +38,8 @@ namespace Streamstone.Scenarios
         {
             await Stream.ProvisionAsync(virtual1, default);
 
-            Assert.True((await Stream.TryOpenAsync(virtual1, default)).Found);
-            Assert.False((await Stream.TryOpenAsync(virtual2, default)).Found);
+            Assert.That((await Stream.TryOpenAsync(virtual1, default)).Found, Is.True);
+            Assert.That((await Stream.TryOpenAsync(virtual2, default)).Found, Is.False);
         }
 
         [Test]

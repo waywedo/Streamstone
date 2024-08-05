@@ -21,7 +21,7 @@ namespace Streamstone.Scenarios
         public async Task When_stream_does_exists()
         {
             await Stream.ProvisionAsync(partition, default);
-            Assert.NotNull(await Stream.OpenAsync(partition, default));
+            Assert.That(await Stream.OpenAsync(partition, default), Is.Not.Null);
         }
 
         [Test]

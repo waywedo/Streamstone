@@ -15,18 +15,18 @@
 	<PropertyGroup>
 		<PackageId>waywedo.Streamstone</PackageId>
 		<Title>Streamstone core library</Title>
-		<VersionPrefix>1.1.4</VersionPrefix>
+		<VersionPrefix>1.1.5</VersionPrefix>
 		<Description>Way We Do specific version of Streamstone. Primarily modified to update Azure Table Storage API's and updgrade Stream.Version from int to long.</Description>
-	</PropertyGroup>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    </PropertyGroup>
 
 	<PropertyGroup>
 		<IsPackable>true</IsPackable>
-		<SourceLinkCreate>true</SourceLinkCreate>
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Azure.Data.Tables" Version="12.5.0" />
+	  <PackageReference Include="Azure.Data.Tables" Version="12.9.0" />
 	</ItemGroup>
 
 </Project>

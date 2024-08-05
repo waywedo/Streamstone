@@ -22,8 +22,6 @@
         <PackageReleaseNotes></PackageReleaseNotes>
         <RepositoryUrl>https://github.com/waywedo/waywedo.Streamstone</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <IncludeSymbols>true</IncludeSymbols>
-        <IncludeSource>true</IncludeSource>
     </PropertyGroup>
 
     <ItemGroup>
@@ -49,27 +47,9 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <LibProjectTargetFramework>net6.0</LibProjectTargetFramework>
-        <ConsoleProjectTargetFramework>net6.0</ConsoleProjectTargetFramework>
+        <LibProjectTargetFramework>net8.0</LibProjectTargetFramework>
+        <ConsoleProjectTargetFramework>net8.0</ConsoleProjectTargetFramework>
         <TestProjectTargetFramework>$(ConsoleProjectTargetFramework)</TestProjectTargetFramework>
-    </PropertyGroup>
-
-    <!-- Shared Package Versions -->
-    <PropertyGroup>
-
-        <!-- Testing packages -->
-        <NUnitVersion>3.10.0</NUnitVersion>
-        <NUnit3TestAdapterVersion>3.10.0</NUnit3TestAdapterVersion>
-        <MicrosoftNETTestSdkVersion>15.7.2</MicrosoftNETTestSdkVersion>
-        <ExpectedObjectsVersion>2.3.4</ExpectedObjectsVersion>
-
-        <!-- 3rd party packages -->
-        <MicrosoftAzureCosmosTableVersion>1.0.0</MicrosoftAzureCosmosTableVersion>
-        <NewtonsoftJsonBson>1.0.2</NewtonsoftJsonBson>
-
-        <!-- Tooling related packages -->
-        <SourceLinkVersion>2.7.6</SourceLinkVersion>
-
     </PropertyGroup>
 
     <!-- For Debug builds add a dev version suffix -->

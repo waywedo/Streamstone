@@ -21,13 +21,13 @@ namespace Streamstone.Scenarios
         public async Task When_stream_does_exists()
         {
             await Stream.ProvisionAsync(partition, default);
-            Assert.True(await Stream.ExistsAsync(partition, default));
+            Assert.That(await Stream.ExistsAsync(partition, default), Is.True);
         }
 
         [Test]
         public async Task When_stream_does_not_exist()
         {
-            Assert.False(await Stream.ExistsAsync(partition, default));
+            Assert.That(await Stream.ExistsAsync(partition, default), Is.False);
         }
     }
 }
